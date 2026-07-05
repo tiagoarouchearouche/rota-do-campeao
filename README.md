@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rota do Campeão
 
-## Getting Started
+Plataforma web que mostra a rota necessária para um time ser campeão, se classificar ou escapar do rebaixamento, com cenários otimista/realista/pessimista e compartilhamento por link, WhatsApp e imagem.
 
-First, run the development server:
+## Rodando localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000). **Não é necessário nenhuma chave de API** — a aplicação roda em modo demonstração (dados mockados) por padrão.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Ativando dados oficiais
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+A **football-data.org** é a única fonte de dados reais deste projeto.
 
-## Learn More
+```bash
+cp .env.example .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+Preencha `FOOTBALL_DATA_KEY` (crie uma chave gratuita em https://www.football-data.org/client/register) e mantenha `SPORTS_DATA_PROVIDER=football-data`. Veja o guia completo em [`docs/api-integrations.md`](docs/api-integrations.md).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Importante sobre o `.env.local`:**
+- Fica na **raiz do projeto**, no mesmo nível de `package.json` — nunca dentro de `src/`.
+- Depois de criar ou editar o arquivo, **pare o servidor (Ctrl+C) e rode `npm run dev` de novo**. O Next.js só lê variáveis de ambiente na inicialização do processo.
+- Este projeto é **Next.js App Router**, não Vite. As rotas em `src/app/api/*/route.ts` já rodam como parte do próprio `npm run dev` — **não é preciso `vercel dev`, `vercel login` nem criar conta na Vercel** para testar localmente. Uma conta na Vercel (ou serviço equivalente) só é necessária se você quiser fazer deploy nesse provedor específico; para rodar e testar tudo localmente, `npm run dev` já é suficiente.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Como confirmar se está usando dados reais ou mock
 
-## Deploy on Vercel
+```bash
+curl "http://localhost:3000/api/standings?competitionId=brasileirao-serie-a&refresh=true"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Olhe os campos `source` e `isMock` na resposta:
+- `"source": "football-data"` e `"isMock": false` → dados reais.
+- `"source": "mock"` e `"isMock": true` → caiu no fallback demonstrativo.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Se cair em mock com a chave configurada, veja os logs do terminal onde `npm run dev` está rodando — cada busca imprime uma linha `[sportsData] ...` com o provider tentado, se a chave foi encontrada (nunca o valor), e o motivo do fallback (`reason=...`, ex. `invalid_key`, `rate_limited`, `not_mapped`). Causas mais comuns: competição ainda em `needs_mapping` ou fora do plano gratuito, chave inválida/expirada, **limite de 10 requisições/minuto do plano gratuito atingido** (a busca de time consulta várias competições de uma vez com cache frio), ou a temporada (`season`) ainda sem dados publicados pelo provedor.
+
+Para ver quais competições estão realmente disponíveis no seu plano agora: `curl "http://localhost:3000/api/competitions?showUnavailable=true"`.
+
+## Scripts
+
+```bash
+npm run dev     # servidor de desenvolvimento
+npm run build   # build de produção
+npm run lint    # eslint
+npm run test    # testes unitários (vitest)
+```
+
+## Arquitetura
+
+A camada de dados esportivos (provedores externos, normalização, cache, fallback mockado e motores de cálculo/cenários) está documentada em detalhe em [`docs/api-integrations.md`](docs/api-integrations.md).
