@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { Share2, Check } from "lucide-react";
 import type { PathAnalysis } from "@/services/sportsData/types";
 
 const RISK_STYLES: Record<PathAnalysis["riskLevel"], string> = {
-  low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  medium: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  high: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  critical: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  low: "bg-success/15 text-success",
+  medium: "bg-blue-400/15 text-blue-300",
+  high: "bg-warning/15 text-warning",
+  critical: "bg-danger/15 text-danger",
 };
 
 const RISK_NUMBER_COLOR: Record<PathAnalysis["riskLevel"], string> = {
-  low: "text-emerald-600 dark:text-emerald-400",
-  medium: "text-blue-600 dark:text-blue-400",
-  high: "text-amber-600 dark:text-amber-400",
-  critical: "text-red-600 dark:text-red-400",
+  low: "text-success",
+  medium: "text-blue-300",
+  high: "text-warning",
+  critical: "text-danger",
 };
 
 const RISK_LABEL: Record<PathAnalysis["riskLevel"], string> = {
@@ -40,7 +41,7 @@ export function PathAnalysisCard({ analysis }: { analysis: PathAnalysis }) {
         await navigator.share({ text });
         return;
       } catch {
-        // usuário cancelou o compartilhamento nativo — cai para copiar ao portal-clipboard abaixo
+        // usuário cancelou o compartilhamento nativo — cai para copiar ao clipboard abaixo
       }
     }
     try {
@@ -53,42 +54,41 @@ export function PathAnalysisCard({ analysis }: { analysis: PathAnalysis }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="flex flex-col gap-3 rounded-md border border-border bg-graphite p-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">{TITLE_LABEL[analysis.target]}</h3>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${RISK_STYLES[analysis.riskLevel]}`}>
+        <h3 className="font-display text-base font-bold text-white">{TITLE_LABEL[analysis.target]}</h3>
+        <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${RISK_STYLES[analysis.riskLevel]}`}>
           {RISK_LABEL[analysis.riskLevel]}
         </span>
       </div>
 
       <div className="flex items-end gap-2">
-        <span className={`text-4xl font-extrabold tabular-nums ${RISK_NUMBER_COLOR[analysis.riskLevel]}`}>
+        <span className={`font-display text-4xl font-bold tabular-nums ${RISK_NUMBER_COLOR[analysis.riskLevel]}`}>
           {analysis.pointsNeeded}
         </span>
-        <span className="pb-1 text-sm text-neutral-500 dark:text-neutral-400">
-          pontos necessários ({analysis.minimumWinsNeeded} vitórias aprox.)
-        </span>
+        <span className="pb-1 text-sm text-muted">pontos necessários ({analysis.minimumWinsNeeded} vitórias aprox.)</span>
       </div>
 
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">{analysis.message}</p>
+      <p className="text-sm text-muted">{analysis.message}</p>
 
-      <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-2">
+      <dl className="grid grid-cols-2 gap-2 text-xs">
         <div>
-          <dt className="text-neutral-500">Pontos máx. possíveis</dt>
-          <dd className="font-semibold">{analysis.maximumPossiblePoints}</dd>
+          <dt className="text-muted-2">Pontos máx. possíveis</dt>
+          <dd className="font-semibold text-white">{analysis.maximumPossiblePoints}</dd>
         </div>
         <div>
-          <dt className="text-neutral-500">Linha de corte estimada</dt>
-          <dd className="font-semibold">{analysis.estimatedCutLine}</dd>
+          <dt className="text-muted-2">Linha de corte estimada</dt>
+          <dd className="font-semibold text-white">{analysis.estimatedCutLine}</dd>
         </div>
       </dl>
 
       <button
         type="button"
         onClick={handleShare}
-        className="self-start rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        className="inline-flex items-center gap-1.5 self-start rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface"
       >
-        {shared ? "Copiado!" : "🔗 Compartilhar este resultado"}
+        {shared ? <Check size={14} aria-hidden="true" /> : <Share2 size={14} aria-hidden="true" />}
+        {shared ? "Copiado!" : "Compartilhar este resultado"}
       </button>
     </div>
   );

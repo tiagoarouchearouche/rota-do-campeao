@@ -29,7 +29,6 @@ src/services/sportsData/
   types.ts                          tipos internos
   sportsDataService.ts              orquestra cache → football-data.org → fallback mock
   teamSearch.ts                     agrega times de todas as competições disponíveis para a busca cross-competição
-  worldCup.ts                       deriva o WorldCupMode e agrupa standings por grupo
   providers/
     httpClient.ts                   fetch com timeout e tradução de erros HTTP
     footballDataProvider.ts         integração com football-data.org + validação de catálogo/plano
@@ -77,7 +76,7 @@ Onde obter a chave: crie uma conta gratuita em https://www.football-data.org/cli
 
 ## 4. Como funciona o fallback mockado
 
-O `mockProvider` gera temporadas completas e determinísticas (mesmo "seed" sempre produz os mesmos resultados) para: Brasileirão Série A, Premier League, Championship (Inglaterra), La Liga, Serie A Itália, Bundesliga, Ligue 1, Primeira Liga (Portugal), Eredivisie, Champions League, Eurocopa e Copa do Mundo. Para qualquer outra competição, usa nomes genéricos ("Time Demonstração N") mantendo o mesmo motor de simulação.
+O `mockProvider` gera temporadas completas e determinísticas (mesmo "seed" sempre produz os mesmos resultados) para: Brasileirão Série A, Premier League, Championship (Inglaterra), La Liga, Serie A Itália, Bundesliga, Ligue 1, Primeira Liga (Portugal), Eredivisie, Champions League e Eurocopa. Para qualquer outra competição, usa nomes genéricos ("Time Demonstração N") mantendo o mesmo motor de simulação.
 
 O fallback é acionado quando:
 1. `SPORTS_DATA_PROVIDER=mock` (ou variável ausente) ou `FOOTBALL_DATA_KEY` não configurada;
@@ -119,11 +118,11 @@ Cache em memória (`cache/memoryCache.ts`), por processo/serverless instance:
 
 ## 5.1. Cuidado com o valor de `season`
 
-football-data.org nem sempre rotula a temporada pelo ano civil corrente. Ligas de calendário europeu (Premier League, Championship, La Liga, Serie A Itália, Bundesliga, Ligue 1, Primeira Liga, Eredivisie) e a Champions League usam o **ano de início** da temporada — a 2025-26 é `season=2025`, mesmo depois de o calendário virar 2026. Já Brasileirão e Copa do Mundo usam o próprio ano civil. `competitionRegistry.ts` reflete isso com as constantes `CALENDAR_YEAR_SEASON` e `EUROPEAN_SPLIT_SEASON` — se a API real começar a devolver times todos com 0 jogos/0 pontos, o valor de `season` está desatualizado (revisar a cada virada de temporada europeia, por volta de agosto).
+football-data.org nem sempre rotula a temporada pelo ano civil corrente. Ligas de calendário europeu (Premier League, Championship, La Liga, Serie A Itália, Bundesliga, Ligue 1, Primeira Liga, Eredivisie) e a Champions League usam o **ano de início** da temporada — a 2025-26 é `season=2025`, mesmo depois de o calendário virar 2026. Já o Brasileirão usa o próprio ano civil. `competitionRegistry.ts` reflete isso com as constantes `CALENDAR_YEAR_SEASON` e `EUROPEAN_SPLIT_SEASON` — se a API real começar a devolver times todos com 0 jogos/0 pontos, o valor de `season` está desatualizado (revisar a cada virada de temporada europeia, por volta de agosto).
 
 ## 6. Competições: catálogo real vs. registry estático
 
-`competitionRegistry.ts` só lista competições que a football-data.org documenta oficialmente (`providerCompetitionCode` confirmado): Premier League (PL), Championship (ELC), La Liga (PD), Serie A Itália (SA), Bundesliga (BL1), Ligue 1 (FL1), Primeira Liga (PPL), Eredivisie (DED), Champions League (CL), Brasileirão Série A (BSA), Copa do Mundo (WC) e Eurocopa (EC). Qualquer outra competição (Série B, Copa do Brasil, Libertadores, Copa América, Mundial de Clubes, Sudamericana, MLS, segundas divisões europeias, copas nacionais) fica no registry como `needs_mapping` — sem código, nunca é enviada ao provedor real, e aparece só na área "Outras competições em análise" da home.
+`competitionRegistry.ts` só lista competições que a football-data.org documenta oficialmente (`providerCompetitionCode` confirmado): Premier League (PL), Championship (ELC), La Liga (PD), Serie A Itália (SA), Bundesliga (BL1), Ligue 1 (FL1), Primeira Liga (PPL), Eredivisie (DED), Champions League (CL), Brasileirão Série A (BSA) e Eurocopa (EC). Qualquer outra competição (Série B, Copa do Brasil, Libertadores, Copa América, Mundial de Clubes, Copa do Mundo, Sudamericana, MLS, segundas divisões europeias, copas nacionais) fica no registry como `needs_mapping` — sem código, nunca é enviada ao provedor real, e aparece só na área "Outras competições chegarão em breve" da home.
 
 Mas ter um código no registry não garante acesso: `providers/footballDataProvider.ts` exporta `resolveCompetitionAvailability()`, que busca o catálogo real da football-data.org (`GET /v4/competitions`, cacheado 6h) e cruza com cada `providerCompetitionCode`:
 - código encontrado no catálogo com `plan === "TIER_ONE"` → `status: "available"` (plano gratuito cobre);
@@ -133,29 +132,13 @@ Mas ter um código no registry não garante acesso: `providers/footballDataProvi
 
 `GET /api/competitions` já devolve só as competições com `status: "available"` resolvido nesse momento; passe `?showUnavailable=true` para incluir as demais (usado pela seção "Outras competições em análise" da home).
 
-## 7. Copa do Mundo 2026 (`copa-do-mundo`) e o `WorldCupMode`
-
-O registry aponta para `providerCompetitionCode: "WC"`, `season: 2026`. Como o torneio de 2026 está em andamento, a football-data.org já retorna dados reais — mas o **modo de exibição** (`services/sportsData/worldCup.ts`) é resolvido dinamicamente a partir de `isMock` de standings e fixtures, para nunca apresentar a simulação como se fosse oficial:
-
-- `official_data`: standings reais disponíveis → mostra a tabela (grupos, se o provedor os expuser) com "Fonte: football-data.org".
-- `schedule_only`: só o calendário de jogos é real, standings ainda não → mostra os jogos com aviso "Dados de tabela ainda não disponíveis. Simulação baseada em estrutura pré-torneio."
-- `simulation_only`: nem standings nem jogos reais → experiência de pré-torneio, deixando claro que é simulação manual.
-
-**Observação real de cobertura**: o endpoint `/v4/competitions/WC/standings` da football-data.org devolve as 48 seleções em **uma única tabela combinada** (campo `group` vem `null` em cada linha) — ele não expõe os 12 grupos separadamente pela API. `GroupStandings`/`groupStandingsByGroup()` já lidam com isso (caem para uma única seção "Tabela geral" em vez de 12 mini-tabelas) — não é um bug do normalizador, é uma limitação real da resposta do provedor para este torneio.
-
-`qualificationSpots: 32` reflete o formato de 48 seleções (12 grupos de 4; top 2 + 8 melhores terceiros avançam à fase de 32) — usado pelo motor de cálculo genérico (`pathEngine.ts`) como proxy de "zona de classificação" sobre a tabela combinada.
-
-O `mockProvider` também simula 48 seleções para essa competição, mas **é só uma demonstração determinística** — nunca representa o resultado real do torneio.
-
-**Importante**: standings e fixtures têm `isMock` **independentes** — é possível a tabela estar real (`official_data`) enquanto os jogos momentaneamente caem para mock (rate limit, timeout pontual no endpoint de matches, etc.), ou vice-versa. `app/copa-do-mundo-2026/page.tsx` verifica `fixtures.isMock` separadamente antes de renderizar a seção "Jogos e mata-mata" — nunca usa só o `mode` geral para essa decisão, exatamente para não acabar mostrando jogos mockados dentro de uma tela marcada como dados reais.
-
-## 8. Busca de time entre competições (`/api/search-team`, `/api/team-competitions`)
+## 7. Busca de time entre competições (`/api/search-team`, `/api/team-competitions`)
 
 `teamSearch.ts` agrega, sob demanda, os times de **todas** as competições atualmente `status: "available"` (via `getTeams()`, já cacheado), filtra por nome (case-insensitive) e agrupa por `teamId` — a football-data.org usa o mesmo ID numérico de time em todas as competições, então um time que aparece em duas competições (ex.: Arsenal na Premier League e na Champions League) é mesclado em um único resultado com as duas competições listadas.
 
 Times cuja competição só retornou dados mockados (`isMock: true`) são **excluídos** do índice de busca — a busca nunca associa um time real a uma competição de forma fictícia. Isso também significa que, com o cache frio, a primeira busca após reiniciar o servidor pode consumir vários requests reais de uma vez (um por competição disponível); buscas seguintes reusam o cache de 30 min.
 
-## 9. Como testar os endpoints internos
+## 8. Como testar os endpoints internos
 
 Com o servidor rodando (`npm run dev`):
 
@@ -179,13 +162,13 @@ Testes unitários das funções puras (motor de cálculo, cenários, normalizado
 npm run test
 ```
 
-## 10. Como fazer deploy sem expor chaves
+## 9. Como fazer deploy sem expor chaves
 
 - Vercel: configure `FOOTBALL_DATA_KEY`, `SPORTS_DATA_PROVIDER`, `SPORTS_DATA_CACHE_TTL_SECONDS` e `SHOW_TECHNICAL_DATA_STATUS` em **Project Settings → Environment Variables**. Nunca prefixe essas variáveis com `NEXT_PUBLIC_` — isso as exporia no bundle do navegador.
 - Netlify: configure as mesmas variáveis em **Site settings → Environment variables**.
 - Nenhuma chave é lida fora de `src/app/api/*` e `src/services/sportsData/providers/footballDataProvider.ts`, ambos executados exclusivamente no servidor.
 
-## 11. Campos derivados de exibição (`form`, `nextMatch`, `percentage`)
+## 10. Campos derivados de exibição (`form`, `nextMatch`, `percentage`)
 
 `/api/standings` e `/api/team-path` passam os `TeamStanding[]` por `enrichStandings()` (`calculations/standingsEnrichment.ts`) antes de responder:
 

@@ -13,17 +13,17 @@ type TabsProps<T extends string> = {
 
 export function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>) {
   return (
-    <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <div className="flex gap-1 border-b border-neutral-200 dark:border-neutral-800">
+    <div role="tablist" aria-label="Seções da competição" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="flex gap-1 border-b border-border">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
+            role="tab"
+            aria-selected={active === tab.key}
             onClick={() => onChange(tab.key)}
             className={`shrink-0 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-semibold transition ${
-              active === tab.key
-                ? "border-emerald-600 text-emerald-700 dark:border-emerald-400 dark:text-emerald-400"
-                : "border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+              active === tab.key ? "border-lime text-lime" : "border-transparent text-muted hover:text-white"
             }`}
           >
             {tab.label}

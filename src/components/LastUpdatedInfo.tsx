@@ -8,9 +8,5 @@ export function LastUpdatedInfo({ updatedAt }: { updatedAt: string }) {
     minute: "2-digit",
   }).format(date);
 
-  return (
-    <span className="text-xs text-neutral-500 dark:text-neutral-400">
-      Última atualização: {formatted}
-    </span>
-  );
+  return <span className="text-xs text-muted">Última atualização: {formatted}</span>;
 }

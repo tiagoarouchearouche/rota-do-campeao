@@ -29,34 +29,34 @@ export function DataStatusPanel({
   const mapped = competition ? competition.status !== "needs_mapping" : undefined;
 
   return (
-    <details className="group rounded-md border border-neutral-200 text-xs dark:border-neutral-800">
-      <summary className="cursor-pointer list-none px-3 py-1.5 font-medium text-neutral-500 marker:content-none dark:text-neutral-400">
+    <details className="group rounded-md border border-border text-xs">
+      <summary className="cursor-pointer list-none px-3 py-1.5 font-medium text-muted marker:content-none">
         <span className="inline-flex items-center gap-1.5">
-          ⚙️ Status dos dados
-          <span className="text-neutral-400 transition group-open:rotate-45">+</span>
+          Status técnico dos dados
+          <span className="text-muted-2 transition group-open:rotate-45">+</span>
         </span>
       </summary>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-neutral-200 px-3 py-2 text-neutral-600 sm:grid-cols-3 dark:border-neutral-800 dark:text-neutral-400">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border px-3 py-2 text-muted sm:grid-cols-3">
         <div>
-          <dt className="text-neutral-400">Provider usado</dt>
-          <dd className="font-medium">{SOURCE_LABEL[source]}</dd>
+          <dt className="text-muted-2">Provider usado</dt>
+          <dd className="font-medium text-white">{SOURCE_LABEL[source]}</dd>
         </div>
         <div>
-          <dt className="text-neutral-400">Última atualização</dt>
-          <dd className="font-medium">{formattedDate}</dd>
+          <dt className="text-muted-2">Última atualização</dt>
+          <dd className="font-medium text-white">{formattedDate}</dd>
         </div>
         <div>
-          <dt className="text-neutral-400">Veio do cache?</dt>
-          <dd className="font-medium">{cached ? "Sim" : "Não"}</dd>
+          <dt className="text-muted-2">Veio do cache?</dt>
+          <dd className="font-medium text-white">{cached ? "Sim" : "Não"}</dd>
         </div>
         <div>
-          <dt className="text-neutral-400">Houve fallback para mock?</dt>
-          <dd className="font-medium">{isMock ? "Sim" : "Não"}</dd>
+          <dt className="text-muted-2">Houve fallback para mock?</dt>
+          <dd className="font-medium text-white">{isMock ? "Sim" : "Não"}</dd>
         </div>
         {mapped !== undefined && (
           <div>
-            <dt className="text-neutral-400">Competição mapeada?</dt>
-            <dd className="font-medium">{mapped ? "Sim" : "Não (needs_mapping)"}</dd>
+            <dt className="text-muted-2">Competição mapeada?</dt>
+            <dd className="font-medium text-white">{mapped ? "Sim" : "Não (needs_mapping)"}</dd>
           </div>
         )}
       </dl>

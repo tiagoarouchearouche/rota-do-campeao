@@ -11,13 +11,7 @@ export type TeamStatus =
 
 export type MatchStatus = "scheduled" | "live" | "finished";
 
-export type CompetitionAvailability =
-  | "available"
-  | "unavailable_plan"
-  | "coming_soon"
-  | "needs_mapping"
-  | "pre_tournament"
-  | "no_current_data";
+export type CompetitionAvailability = "available" | "unavailable_plan" | "coming_soon" | "needs_mapping";
 
 export type Competition = {
   id: string;
@@ -163,11 +157,6 @@ export type TeamPathResponse = {
  * but is intentionally disconnected from sportsDataService and the UI — see CLAUDE.md.
  */
 export type SportsDataProviderMode = "football-data" | "mock";
-
-export type WorldCupMode =
-  | "official_data"
-  | "schedule_only"
-  | "simulation_only";
 
 export type TeamSearchCompetitionRef = {
   competitionId: string;

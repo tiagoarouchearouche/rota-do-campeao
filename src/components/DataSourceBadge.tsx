@@ -1,24 +1,52 @@
+import { CheckCircle2, AlertTriangle, CircleSlash } from "lucide-react";
 import type { DataProvider } from "@/services/sportsData/types";
 
-const LABELS: Record<DataProvider, string> = {
-  "api-football": "API-Football",
-  "football-data": "football-data.org",
-  mock: "Demonstração",
+type DataState = "official" | "demo" | "unavailable";
+
+function resolveState(source: DataProvider, isMock: boolean, empty: boolean): DataState {
+  if (empty) return "unavailable";
+  if (isMock || source === "mock") return "demo";
+  return "official";
+}
+
+const CONFIG: Record<DataState, { label: string; className: string; Icon: typeof CheckCircle2 }> = {
+  official: {
+    label: "Dados oficiais atualizados",
+    className: "bg-success/15 text-success border-success/30",
+    Icon: CheckCircle2,
+  },
+  demo: {
+    label: "Dados demonstrativos",
+    className: "bg-warning/15 text-warning border-warning/30",
+    Icon: AlertTriangle,
+  },
+  unavailable: {
+    label: "Dados indisponíveis",
+    className: "bg-muted-2/15 text-muted-2 border-muted-2/30",
+    Icon: CircleSlash,
+  },
 };
 
-const STYLES: Record<DataProvider, string> = {
-  "api-football": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  "football-data": "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  mock: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-};
+/**
+ * The single source of truth for "is this real" across the app — never render a
+ * competing claim (like a marketing label saying "tabela real") next to this badge.
+ */
+export function DataSourceBadge({
+  source,
+  isMock,
+  empty = false,
+}: {
+  source: DataProvider;
+  isMock: boolean;
+  empty?: boolean;
+}) {
+  const state = resolveState(source, isMock, empty);
+  const { label, className, Icon } = CONFIG[state];
 
-export function DataSourceBadge({ source }: { source: DataProvider }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${STYLES[source]}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      Fonte: {LABELS[source]}
+    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${className}`}>
+      <Icon size={13} aria-hidden="true" />
+      {label}
     </span>
   );
 }

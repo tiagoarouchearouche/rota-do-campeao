@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Link2, MessageCircle, ImageDown, Check } from "lucide-react";
 import { buildWhatsAppShareUrl } from "@/lib/shareState";
 
 type ShareButtonsProps = {
@@ -35,7 +36,6 @@ function downloadSummaryImage(teamName: string, competitionName: string, lines: 
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // First measurement pass to size the canvas to the wrapped content.
   ctx.font = "17px sans-serif";
   const [impactLine, ...bodyLines] = lines;
   const wrappedImpact = impactLine ? wrapLines(ctx, impactLine, contentWidth - 32) : [];
@@ -46,33 +46,29 @@ function downloadSummaryImage(teamName: string, competitionName: string, lines: 
   canvas.width = width;
   canvas.height = height;
 
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, "#064e3b");
-  gradient.addColorStop(1, "#022c22");
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = "#050505";
   ctx.fillRect(0, 0, width, height);
 
   // Brand pill
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.fillRect(padding, 28, 210, 34);
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#8dff00";
+  ctx.fillRect(padding, 28, 190, 34);
+  ctx.fillStyle = "#050505";
   ctx.font = "bold 16px sans-serif";
-  ctx.fillText("🏆 Rota do Campeão", padding + 14, 51);
+  ctx.fillText("ROTA DO CAMPEÃO", padding + 14, 51);
 
-  // Team + competition
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 34px sans-serif";
   ctx.fillText(teamName, padding, 130);
-  ctx.fillStyle = "#a7f3d0";
+  ctx.fillStyle = "#8dff00";
   ctx.font = "18px sans-serif";
   ctx.fillText(competitionName, padding, 160);
 
   let cursorY = 200;
 
   if (wrappedImpact.length > 0) {
-    ctx.fillStyle = "rgba(255,255,255,0.1)";
+    ctx.fillStyle = "#1b1e20";
     ctx.fillRect(padding, cursorY, contentWidth, impactBoxHeight);
-    ctx.fillStyle = "#34d399";
+    ctx.fillStyle = "#8dff00";
     ctx.fillRect(padding, cursorY, 4, impactBoxHeight);
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 18px sans-serif";
@@ -82,20 +78,20 @@ function downloadSummaryImage(teamName: string, competitionName: string, lines: 
     cursorY += impactBoxHeight + 20;
   }
 
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#d1d5db";
   ctx.font = "16px sans-serif";
   wrappedBody.forEach((line, index) => {
     ctx.fillText(line, padding, cursorY + index * 26);
   });
   cursorY += wrappedBody.length * 26 + 30;
 
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.strokeStyle = "#2a2e31";
   ctx.beginPath();
   ctx.moveTo(padding, cursorY);
   ctx.lineTo(width - padding, cursorY);
   ctx.stroke();
 
-  ctx.fillStyle = "#a7f3d0";
+  ctx.fillStyle = "#9aa0a6";
   ctx.font = "13px sans-serif";
   const generatedAt = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date());
   ctx.fillText(`Simulado em ${generatedAt} · Rota do Campeão`, padding, cursorY + 26);
@@ -119,34 +115,34 @@ export function ShareButtons({ shareUrl, teamName, competitionName, summaryLines
     }
   }
 
-  const whatsappUrl = buildWhatsAppShareUrl(
-    shareUrl,
-    `Veja a rota do ${teamName} na ${competitionName} no Rota do Campeão:`
-  );
+  const whatsappUrl = buildWhatsAppShareUrl(shareUrl, `Veja o caminho do ${teamName} até o título no Rota do Campeão.`);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
         onClick={handleCopyLink}
-        className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface"
       >
-        🔗 {copied ? "Link copiado!" : "Copiar link"}
+        {copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}
+        {copied ? "Link copiado!" : "Copiar link"}
       </button>
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface"
       >
-        💬 WhatsApp
+        <MessageCircle size={14} aria-hidden="true" />
+        WhatsApp
       </a>
       <button
         type="button"
         onClick={() => downloadSummaryImage(teamName, competitionName, summaryLines)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface"
       >
-        🖼️ Baixar imagem
+        <ImageDown size={14} aria-hidden="true" />
+        Baixar imagem
       </button>
     </div>
   );

@@ -10,8 +10,8 @@ import type { Competition } from "../types";
  * "season" nas APIs de futebol nem sempre é o ano corrente: ligas de calendário europeu
  * (ago–mai) e a Champions League são rotuladas pelo ANO DE INÍCIO da temporada (ex.: a
  * temporada 2025-26 é `season=2025`, mesmo depois de virar 2026), enquanto ligas de
- * calendário anual (Brasileirão) e torneios de edição única (Copa do Mundo) usam o próprio
- * ano civil. Usar o valor errado faz a API real devolver uma temporada ainda sem jogos
+ * calendário anual (Brasileirão) usam o próprio ano civil. Usar o valor errado faz a API real
+ * devolver uma temporada ainda sem jogos
  * (todos os times com 0 pontos) em vez de um erro — revisar a cada virada de temporada.
  */
 const CALENDAR_YEAR_SEASON = 2026;
@@ -169,23 +169,6 @@ export const competitions: Competition[] = [
     hasRelegation: true,
     relegationSpots: 4,
     qualificationSpots: 6,
-    titleSpots: 1,
-    status: "available",
-  },
-  {
-    // 2026 é a primeira edição com 48 seleções (12 grupos de 4; top 2 + 8 melhores
-    // terceiros avançam à fase de 32). Ver worldCup.ts para o modo de exibição
-    // (dados oficiais / só calendário / simulação) usado quando standings reais
-    // ainda não estão completos na football-data.org.
-    id: "copa-do-mundo",
-    name: "Copa do Mundo FIFA",
-    continent: "Global",
-    type: "groups",
-    provider: "football-data",
-    providerCompetitionCode: "WC",
-    season: CALENDAR_YEAR_SEASON,
-    hasRelegation: false,
-    qualificationSpots: 32,
     titleSpots: 1,
     status: "available",
   },

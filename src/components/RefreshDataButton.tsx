@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
 
 export function RefreshDataButton({ onRefresh }: { onRefresh: () => Promise<void> | void }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -19,10 +20,10 @@ export function RefreshDataButton({ onRefresh }: { onRefresh: () => Promise<void
       type="button"
       onClick={handleClick}
       disabled={isRefreshing}
-      className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+      className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-white transition hover:bg-surface-hover disabled:opacity-60"
     >
-      <span className={isRefreshing ? "animate-spin" : ""}>⟳</span>
-      {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+      <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} aria-hidden="true" />
+      {isRefreshing ? "Atualizando..." : "Atualizar"}
     </button>
   );
 }

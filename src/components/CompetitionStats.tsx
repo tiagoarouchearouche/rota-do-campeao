@@ -2,16 +2,18 @@ import type { Fixture, TeamStanding } from "@/services/sportsData/types";
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-      <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{sub}</p>}
+    <div className="rounded-md border border-border bg-graphite p-4">
+      <p className="text-xs uppercase tracking-wide text-muted">{label}</p>
+      <p className="mt-1 font-display text-2xl font-bold text-white">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
     </div>
   );
 }
 
 export function CompetitionStats({ standings, fixtures }: { standings: TeamStanding[]; fixtures: Fixture[] }) {
-  if (standings.length === 0) return null;
+  if (standings.length === 0) {
+    return <p className="text-sm text-muted">Estatísticas indisponíveis para esta competição no momento.</p>;
+  }
 
   const bestAttack = [...standings].sort((a, b) => b.goalsFor - a.goalsFor)[0];
   const bestDefense = [...standings].sort((a, b) => a.goalsAgainst - b.goalsAgainst)[0];
