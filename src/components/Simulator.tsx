@@ -6,6 +6,7 @@ import type { Competition, Fixture, TeamStanding } from "@/services/sportsData/t
 import { applySimulatedResults, type MatchOverride } from "@/services/sportsData/calculations/tableSimulator";
 import { StandingsTable } from "@/components/StandingsTable";
 import { TeamLogo } from "@/components/TeamLogo";
+import { trackEvent } from "@/lib/analytics";
 
 const OPTIONS: { value: MatchOverride; label: (home: string, away: string) => string }[] = [
   { value: "home", label: (home) => home },
@@ -36,6 +37,7 @@ export function Simulator({
 
   function setResult(fixtureId: string, value: MatchOverride) {
     setOverrides((prev) => ({ ...prev, [fixtureId]: value }));
+    trackEvent("simulate_match", { fixtureId, result: value });
   }
 
   return (

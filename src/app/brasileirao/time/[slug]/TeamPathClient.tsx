@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Trophy, Globe2, ShieldAlert, ArrowLeft } from "lucide-react";
 import type { ScenarioName, TeamPathResponse } from "@/services/sportsData/types";
-import type { ApiErrorBody } from "@/lib/apiErrors";
+import type { TeamPathResult } from "@/services/sportsData/teamPath";
 import { getScenarioPreference, setLastTeamId, setScenarioPreference } from "@/lib/userPreferences";
 import { buildTeamShareUrl } from "@/lib/shareState";
-import { getZoneBand } from "@/services/sportsData/calculations/classificationZones";
+import { resolveTeamObjective, type TeamObjective } from "@/services/sportsData/calculations/teamObjective";
+import { getTeamUrl } from "@/lib/teamSlug";
 import { BRASILEIRAO_COMPETITION_ID } from "@/services/sportsData/competitions/competitionRegistry";
 import { TeamLogo } from "@/components/TeamLogo";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TeamSituationText } from "@/components/TeamSituationText";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { ApiWarningBanner } from "@/components/ApiWarningBanner";
 import { DataStatusPanel } from "@/components/DataStatusPanel";
@@ -44,31 +47,33 @@ const ERROR_COPY: Record<string, { title: string; body: string }> = {
   },
 };
 
-type LoadState =
-  | { status: "loading" }
-  | { status: "success"; data: TeamPathResponse }
-  | { status: "error"; code: string; message: string };
+type HeadlineIconKey = "relegation" | "continental" | "title";
 
-function resolveHeadline(status: string | undefined, tone: string | null): string {
-  if (status === "relegation_zone" || status === "relegation_risk") return "Rota para escapar do rebaixamento";
-  if (status === "title_race") return "Rota para o título";
-  if (tone === "sula") return "Rota para a Sul-Americana";
-  if (tone === "libertadores" || tone === "pre-libertadores") return "Rota para a Libertadores";
+function resolveHeadline(objective: TeamObjective): string {
+  if (objective === "relegation" || objective === "risk") return "Rota para escapar do rebaixamento";
+  if (objective === "title") return "Rota para o título";
+  if (objective === "sula") return "Rota para a Sul-Americana";
+  if (objective === "libertadores" || objective === "pre-libertadores") return "Rota para a Libertadores";
   return "Rota do campeão";
 }
 
-type HeadlineIconKey = "relegation" | "continental" | "title";
-
-function resolveHeadlineIconKey(status: string | undefined, tone: string | null): HeadlineIconKey {
-  if (status === "relegation_zone" || status === "relegation_risk") return "relegation";
-  if (tone === "sula" || tone === "libertadores" || tone === "pre-libertadores") return "continental";
+function resolveHeadlineIconKey(objective: TeamObjective): HeadlineIconKey {
+  if (objective === "relegation" || objective === "risk") return "relegation";
+  if (objective === "sula" || objective === "libertadores" || objective === "pre-libertadores") return "continental";
   return "title";
 }
 
-export function TeamPathClient({ teamId }: { teamId: string }) {
+export function TeamPathClient({
+  teamId,
+  initialResult,
+}: {
+  teamId: string;
+  slug: string;
+  initialResult: TeamPathResult;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [result, setResult] = useState<TeamPathResult>(initialResult);
   const [scenario, setScenario] = useState<ScenarioName>(() => {
     const fromUrl = searchParams.get("scenario");
     if (fromUrl === "optimistic" || fromUrl === "realistic" || fromUrl === "pessimistic") return fromUrl;
@@ -76,35 +81,23 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
   });
   const [showShare, setShowShare] = useState(false);
 
-  const load = useCallback(
-    async (refresh: boolean) => {
-      setState({ status: "loading" });
-      try {
-        const res = await fetch(
-          `/api/team-path?competitionId=${BRASILEIRAO_COMPETITION_ID}&teamId=${teamId}${refresh ? "&refresh=true" : ""}`
-        );
-        const json = await res.json();
-        if (!res.ok || "error" in json) {
-          const errorBody = json as ApiErrorBody;
-          setState({ status: "error", code: errorBody.error ?? "internal_error", message: errorBody.message ?? "" });
-          return;
-        }
-        setState({ status: "success", data: json as TeamPathResponse });
-      } catch {
-        setState({ status: "error", code: "network_error", message: "" });
-      }
-    },
-    [teamId]
-  );
-
   useEffect(() => {
     setLastTeamId(teamId);
-    // Legitimate fetch-on-param-change: `load`'s first statement sets a "loading" status
-    // synchronously, which the static analyzer treats as "setState in an effect" even though
-    // this is the standard data-fetching-in-effect pattern (no prop/state is being mirrored).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load(false);
-  }, [teamId, load]);
+  }, [teamId]);
+
+  async function refresh() {
+    try {
+      const res = await fetch(`/api/team-path?competitionId=${BRASILEIRAO_COMPETITION_ID}&teamId=${teamId}&refresh=true`);
+      const json = await res.json();
+      if (!res.ok || "error" in json) {
+        setResult({ ok: false, code: json.error ?? "internal_error", message: json.message ?? "", status: res.status });
+        return;
+      }
+      setResult({ ok: true, data: json as TeamPathResponse });
+    } catch {
+      setResult({ ok: false, code: "internal_error", message: "", status: 0 });
+    }
+  }
 
   function selectScenario(next: ScenarioName) {
     setScenario(next);
@@ -115,32 +108,18 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
   }
 
   const shareUrl = useMemo(() => {
-    if (state.status !== "success" || typeof window === "undefined") return "";
-    return buildTeamShareUrl({ origin: window.location.origin, teamId, season: state.data.competition.season, scenario });
-  }, [state, teamId, scenario]);
+    if (!result.ok || typeof window === "undefined") return "";
+    return buildTeamShareUrl({ origin: window.location.origin, teamName: result.data.team.teamName, season: result.data.competition.season, scenario });
+  }, [result, scenario]);
 
-  if (state.status === "loading") {
-    return (
-      <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 px-4 py-10" aria-busy="true" aria-live="polite">
-        <span className="sr-only">Carregando análise do time...</span>
-        <div className="flex flex-col gap-4">
-          <div className="h-6 w-48 animate-pulse rounded bg-surface" />
-          <div className="h-10 w-72 animate-pulse rounded bg-surface" />
-          <div className="h-40 w-full animate-pulse rounded bg-surface" />
-          <div className="h-40 w-full animate-pulse rounded bg-surface" />
-        </div>
-      </main>
-    );
-  }
-
-  if (state.status === "error") {
-    const copy = ERROR_COPY[state.code] ?? ERROR_COPY.internal_error;
+  if (!result.ok) {
+    const copy = ERROR_COPY[result.code] ?? ERROR_COPY.internal_error;
     return (
       <main id="main-content" className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center gap-4 px-4 py-20 text-center">
         <h1 className="font-display text-2xl font-bold text-white">{copy.title}</h1>
-        <p className="text-sm text-muted">{state.message || copy.body}</p>
+        <p className="text-sm text-muted">{result.message || copy.body}</p>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => load(true)} className="rounded-md bg-lime px-4 py-2 text-sm font-bold text-ink">
+          <button type="button" onClick={refresh} className="rounded-md bg-lime px-4 py-2 text-sm font-bold text-ink">
             Tentar novamente
           </button>
           <Link href="/" className="rounded-md border border-border px-4 py-2 text-sm font-bold text-white hover:bg-surface">
@@ -155,11 +134,19 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
   }
 
   const { team, competition, standings, fixtures, pathToTitle, pathToQualification, pathToAvoidRelegation, decisiveMatches, scenarios } =
-    state.data;
-  const band = getZoneBand(team.position, standings.length, competition);
-  const headline = resolveHeadline(team.status, band?.tone ?? null);
-  const headlineIconKey = resolveHeadlineIconKey(team.status, band?.tone ?? null);
+    result.data;
+  const objective = resolveTeamObjective(team, standings, competition);
+  const headline = resolveHeadline(objective);
+  const headlineIconKey = resolveHeadlineIconKey(objective);
   const upcoming = fixtures.filter((f) => f.status !== "finished").slice(0, 5);
+  const opponents = Array.from(
+    new Map(
+      upcoming.map((f) => {
+        const opponent = f.homeTeamId === team.teamId ? { id: f.awayTeamId, name: f.awayTeamName } : { id: f.homeTeamId, name: f.homeTeamName };
+        return [opponent.id, opponent];
+      })
+    ).values()
+  );
   const activeScenario = scenarios[scenario];
 
   const summaryLines = [
@@ -170,7 +157,11 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
-      <Link href="/" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-white">
+      <Breadcrumbs
+        items={[{ name: "Rota do Campeão", path: "/" }, { name: "Brasileirão", path: "/" }, { name: team.teamName }]}
+      />
+
+      <Link href="/" className="mb-4 mt-2 inline-flex items-center gap-1.5 text-sm text-muted hover:text-white">
         <ArrowLeft size={14} aria-hidden="true" />
         Voltar à classificação
       </Link>
@@ -194,7 +185,7 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
         </span>
 
         <div className="flex flex-wrap items-center gap-2">
-          <DataSourceBadge source={state.data.source} isMock={state.data.isMock} />
+          <DataSourceBadge source={result.data.source} isMock={result.data.isMock} />
           <button
             type="button"
             onClick={() => setShowShare((v) => !v)}
@@ -205,14 +196,14 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
         </div>
 
         <DataStatusPanel
-          source={state.data.source}
-          updatedAt={state.data.updatedAt}
-          isMock={state.data.isMock}
-          cached={state.data.cached}
+          source={result.data.source}
+          updatedAt={result.data.updatedAt}
+          isMock={result.data.isMock}
+          cached={result.data.cached}
           competition={competition}
-          showTechnicalStatus={state.data.showTechnicalStatus}
+          showTechnicalStatus={result.data.showTechnicalStatus}
         />
-        <ApiWarningBanner isMock={state.data.isMock} />
+        <ApiWarningBanner isMock={result.data.isMock} />
 
         {showShare && shareUrl && (
           <ShareButtons shareUrl={shareUrl} teamName={team.teamName} competitionName={competition.name} summaryLines={summaryLines} />
@@ -220,6 +211,8 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
       </div>
 
       <div className="flex flex-col gap-6 py-6">
+        <TeamSituationText team={team} standings={standings} fixtures={fixtures} competition={competition} />
+
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <PathAnalysisCard analysis={pathToTitle} />
           <PathAnalysisCard analysis={pathToQualification} />
@@ -236,6 +229,19 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
         <section className="flex flex-col gap-2">
           <h2 className="font-display text-lg font-bold uppercase text-white">Próximos jogos</h2>
           <FixturesList fixtures={upcoming} />
+          {opponents.length > 0 && (
+            <p className="text-xs text-muted-2">
+              Próximos adversários:{" "}
+              {opponents.map((opponent, index) => (
+                <span key={opponent.id}>
+                  {index > 0 && ", "}
+                  <Link href={getTeamUrl(opponent.name)} className="text-white hover:text-lime hover:underline">
+                    {opponent.name}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          )}
         </section>
 
         <AdSlot placement="post-simulation" />
@@ -266,6 +272,18 @@ export function TeamPathClient({ teamId }: { teamId: string }) {
             <p className="mt-2 text-sm text-muted">{activeScenario.message}</p>
           </div>
         </section>
+
+        <nav aria-label="Links relacionados" className="flex flex-wrap gap-2 border-t border-border pt-4">
+          <Link href="/brasileirao/classificacao" className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface">
+            Ver classificação completa
+          </Link>
+          <Link href="/brasileirao/simulador" className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface">
+            Simular Brasileirão
+          </Link>
+          <Link href="/brasileirao/jogos" className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface">
+            Ver próxima rodada
+          </Link>
+        </nav>
       </div>
 
       {shareUrl && (

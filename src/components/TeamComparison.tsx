@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Fixture, TeamStanding } from "@/services/sportsData/types";
 import { calculateMaximumPossiblePoints } from "@/services/sportsData/calculations/pathEngine";
 import { TeamLogo } from "@/components/TeamLogo";
+import { trackEvent } from "@/lib/analytics";
 
 function ComparisonRow({ label, a, b }: { label: string; a: string | number; b: string | number }) {
   return (
@@ -36,7 +37,10 @@ export function TeamComparison({ standings, fixtures }: { standings: TeamStandin
       <div className="grid grid-cols-2 gap-3">
         <select
           value={teamAId}
-          onChange={(event) => setTeamAId(event.target.value)}
+          onChange={(event) => {
+            setTeamAId(event.target.value);
+            trackEvent("compare_teams", { teamA: event.target.value, teamB: teamBId });
+          }}
           className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-white"
           aria-label="Time A"
         >
@@ -48,7 +52,10 @@ export function TeamComparison({ standings, fixtures }: { standings: TeamStandin
         </select>
         <select
           value={teamBId}
-          onChange={(event) => setTeamBId(event.target.value)}
+          onChange={(event) => {
+            setTeamBId(event.target.value);
+            trackEvent("compare_teams", { teamA: teamAId, teamB: event.target.value });
+          }}
           className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-white"
           aria-label="Time B"
         >

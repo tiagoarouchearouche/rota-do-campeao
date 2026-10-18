@@ -7,12 +7,11 @@ import {
   calculatePointsNeededForQualification,
   calculatePointsNeededToAvoidRelegation,
 } from "@/services/sportsData/calculations/pathEngine";
-import { getZoneBand } from "@/services/sportsData/calculations/classificationZones";
+import { resolveTeamObjective, type TeamObjective } from "@/services/sportsData/calculations/teamObjective";
+import { getTeamUrl } from "@/lib/teamSlug";
 import { TeamLogo } from "@/components/TeamLogo";
 
-type Mood = "title" | "libertadores" | "pre-libertadores" | "sula" | "mid" | "risk" | "relegation";
-
-const MOOD_CONFIG: Record<Mood, { label: string; icon: typeof Trophy; tone: string; cta: string }> = {
+const MOOD_CONFIG: Record<TeamObjective, { label: string; icon: typeof Trophy; tone: string; cta: string }> = {
   title: { label: "Disputando o título", icon: Trophy, tone: "text-success", cta: "Ver rota para o título" },
   libertadores: { label: "Na zona de Libertadores", icon: Trophy, tone: "text-success", cta: "Ver rota para a Libertadores" },
   "pre-libertadores": { label: "Na zona de pré-Libertadores", icon: Globe2, tone: "text-info", cta: "Ver rota para a Libertadores" },
@@ -21,17 +20,6 @@ const MOOD_CONFIG: Record<Mood, { label: string; icon: typeof Trophy; tone: stri
   risk: { label: "Risco de rebaixamento", icon: TriangleAlert, tone: "text-warning", cta: "Ver rota para escapar" },
   relegation: { label: "Zona de rebaixamento", icon: ShieldAlert, tone: "text-danger", cta: "Ver rota para escapar" },
 };
-
-function resolveMood(team: TeamStanding, totalTeams: number, competition: Competition): Mood {
-  if (team.status === "relegation_zone") return "relegation";
-  if (team.status === "relegation_risk") return "risk";
-  if (team.status === "title_race") return "title";
-  const band = getZoneBand(team.position, totalTeams, competition);
-  if (band?.tone === "libertadores") return "libertadores";
-  if (band?.tone === "pre-libertadores") return "pre-libertadores";
-  if (band?.tone === "sula") return "sula";
-  return "mid";
-}
 
 export function MyTeamCard({
   team,
@@ -44,8 +32,7 @@ export function MyTeamCard({
   fixtures: Fixture[];
   competition: Competition;
 }) {
-  const totalTeams = standings.length;
-  const mood = resolveMood(team, totalTeams, competition);
+  const mood = resolveTeamObjective(team, standings, competition);
   const config = MOOD_CONFIG[mood];
   const Icon = config.icon;
 
@@ -88,7 +75,7 @@ export function MyTeamCard({
           {remainingGames} jogos restantes · pontuação máxima possível: {maxPoints} pts
         </p>
         <Link
-          href={`/time/${team.teamId}`}
+          href={getTeamUrl(team.teamName)}
           className="inline-flex items-center justify-center gap-1.5 self-start rounded-md bg-lime px-4 py-2 text-sm font-bold text-ink hover:bg-lime-dark sm:self-end"
         >
           {config.cta}

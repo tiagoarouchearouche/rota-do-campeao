@@ -106,10 +106,20 @@ function normalize(name: string): string {
     .trim();
 }
 
+/**
+ * The canonical short slug for one of the 20 known clubs (e.g. "atletico-mineiro"), shared
+ * between crest resolution here and URL slugs in teamSlug.ts — both are really the same
+ * "which known club is this" problem. Returns null for a team outside the alias table (a
+ * promoted club this season, for example); callers decide their own fallback.
+ */
+export function resolveTeamSlug(teamName: string): string | null {
+  const normalized = normalize(teamName);
+  return TEAM_ALIASES[normalized] ?? null;
+}
+
 /** Returns the public path to the team's crest, or null when no local asset matches. */
 export function resolveTeamLogo(teamName: string): string | null {
-  const normalized = normalize(teamName);
-  const slug = TEAM_ALIASES[normalized];
+  const slug = resolveTeamSlug(teamName);
   if (!slug) return null;
   return `${LOGO_BASE_PATH}/${slug}.png`;
 }

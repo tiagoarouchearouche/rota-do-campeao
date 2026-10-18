@@ -8,12 +8,17 @@ export default function NotFound() {
         <ShieldAlert size={28} aria-hidden="true" />
       </span>
       <div>
-        <h1 className="font-display text-2xl font-bold text-white">Página não encontrada</h1>
-        <p className="mt-2 text-sm text-muted">Esse time não existe no Brasileirão Série A, ou o link está desatualizado.</p>
+        <h1 className="font-display text-2xl font-bold text-white">Essa rota não levou ao título.</h1>
+        <p className="mt-2 text-sm text-muted">Esse time ou página não existe no Brasileirão Série A, ou o link está desatualizado.</p>
       </div>
-      <Link href="/" className="rounded-md bg-lime px-4 py-2 text-sm font-bold text-ink hover:bg-lime-dark">
-        Voltar ao início
-      </Link>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Link href="/" className="rounded-md bg-lime px-4 py-2 text-sm font-bold text-ink hover:bg-lime-dark">
+          Voltar ao Brasileirão
+        </Link>
+        <Link href="/brasileirao/classificacao" className="rounded-md border border-border px-4 py-2 text-sm font-bold text-white hover:bg-surface">
+          Ver classificação
+        </Link>
+      </div>
     </main>
   );
 }

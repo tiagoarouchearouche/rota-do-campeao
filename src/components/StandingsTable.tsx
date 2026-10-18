@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Trophy, ShieldAlert, TriangleAlert } from "lucide-react";
 import type { Competition, TeamStanding } from "@/services/sportsData/types";
 import { getZoneBand, ZONE_LEGEND, type ZoneTone } from "@/services/sportsData/calculations/classificationZones";
+import { getTeamUrl } from "@/lib/teamSlug";
 import { TeamLogo } from "@/components/TeamLogo";
 
 const TONE_STYLES: Record<ZoneTone, string> = {
@@ -134,7 +135,7 @@ export function StandingsTable({
                     </span>
                   </td>
                   <td className="sticky left-8 z-10 bg-ink px-3 py-2">
-                    <Link href={`/time/${team.teamId}`} className="flex items-center gap-2 font-medium hover:text-lime hover:underline">
+                    <Link href={getTeamUrl(team.teamName)} className="flex items-center gap-2 font-medium hover:text-lime hover:underline">
                       <TeamLogo team={team.teamName} size="sm" />
                       {team.teamName}
                       {isMyTeam && <span className="rounded-sm bg-lime px-1.5 py-0.5 text-[10px] font-bold text-ink">SEU TIME</span>}
@@ -213,7 +214,7 @@ export function StandingsTable({
                     <FormBadges form={team.form} />
                     <span>{team.nextMatch ?? "Próximo jogo a definir"}</span>
                   </div>
-                  <Link href={`/time/${team.teamId}`} className="mt-1 self-start rounded-md bg-lime px-3 py-1.5 text-xs font-bold text-ink">
+                  <Link href={getTeamUrl(team.teamName)} className="mt-1 self-start rounded-md bg-lime px-3 py-1.5 text-xs font-bold text-ink">
                     Analisar este time
                   </Link>
                 </div>

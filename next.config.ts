@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/competicao/:competitionId/time/:teamId", destination: "/time/:teamId", permanent: true },
       { source: "/competicao/:competitionId", destination: "/", permanent: true },
+      { source: "/brasileirao", destination: "/", permanent: true },
     ];
   },
 };

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link2, MessageCircle, ImageDown, Check } from "lucide-react";
 import { buildWhatsAppShareUrl } from "@/lib/shareState";
+import { trackEvent } from "@/lib/analytics";
 
 type ShareButtonsProps = {
   shareUrl: string;
@@ -109,6 +110,7 @@ export function ShareButtons({ shareUrl, teamName, competitionName, summaryLines
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      trackEvent("share_team", { team: teamName, method: "copy_link" });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard indisponível (permissão negada, contexto não seguro) — usuário pode copiar o link manualmente
@@ -131,6 +133,7 @@ export function ShareButtons({ shareUrl, teamName, competitionName, summaryLines
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackEvent("share_team", { team: teamName, method: "whatsapp" })}
         className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface"
       >
         <MessageCircle size={14} aria-hidden="true" />
@@ -138,7 +141,10 @@ export function ShareButtons({ shareUrl, teamName, competitionName, summaryLines
       </a>
       <button
         type="button"
-        onClick={() => downloadSummaryImage(teamName, competitionName, summaryLines)}
+        onClick={() => {
+          downloadSummaryImage(teamName, competitionName, summaryLines);
+          trackEvent("share_team", { team: teamName, method: "image" });
+        }}
         className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-white hover:bg-surface"
       >
         <ImageDown size={14} aria-hidden="true" />

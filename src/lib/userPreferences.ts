@@ -4,7 +4,14 @@ const KEYS = {
   myTeamId: "rota-do-campeao:my-team-id",
   lastTeamId: "rota-do-campeao:last-team-id",
   scenarioPreference: "rota-do-campeao:scenario-preference",
+  cookieConsent: "rota-do-campeao:cookie-consent",
 } as const;
+
+export type CookieConsent = {
+  necessary: true;
+  analytics: boolean;
+  advertising: boolean;
+};
 
 function safeGet(key: string): string | null {
   if (typeof window === "undefined") return null;
@@ -48,4 +55,22 @@ export function getScenarioPreference(): ScenarioName | null {
 
 export function setScenarioPreference(scenario: ScenarioName): void {
   safeSet(KEYS.scenarioPreference, scenario);
+}
+
+export function getCookieConsent(): CookieConsent | null {
+  const value = safeGet(KEYS.cookieConsent);
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed.analytics === "boolean" && typeof parsed.advertising === "boolean") {
+      return { necessary: true, analytics: parsed.analytics, advertising: parsed.advertising };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCookieConsent(consent: CookieConsent): void {
+  safeSet(KEYS.cookieConsent, JSON.stringify(consent));
 }

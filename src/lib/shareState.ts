@@ -1,4 +1,5 @@
 import type { ScenarioName } from "@/services/sportsData/types";
+import { getTeamUrl } from "@/lib/teamSlug";
 
 export type ShareState = {
   scenario: ScenarioName;
@@ -28,7 +29,7 @@ export function decodeShareState(encoded: string): ShareState | null {
 
 export function buildTeamShareUrl(params: {
   origin: string;
-  teamId: string;
+  teamName: string;
   season: number;
   scenario: ScenarioName;
 }): string {
@@ -37,7 +38,7 @@ export function buildTeamShareUrl(params: {
     season: params.season,
     simulatedAt: new Date().toISOString(),
   });
-  const url = new URL(`/time/${params.teamId}`, params.origin);
+  const url = new URL(getTeamUrl(params.teamName), params.origin);
   url.searchParams.set("season", String(params.season));
   url.searchParams.set("scenario", params.scenario);
   url.searchParams.set("state", state);

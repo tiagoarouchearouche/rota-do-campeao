@@ -28,7 +28,7 @@ Estrutura de arquivos:
 src/services/sportsData/
   types.ts                          tipos internos
   sportsDataService.ts              orquestra cache → football-data.org → fallback mock
-  teamSearch.ts                     agrega times de todas as competições disponíveis para a busca cross-competição
+  teamPath.ts                        monta a análise completa de um time (reusado por /api/team-path e pela página de time)
   providers/
     httpClient.ts                   fetch com timeout e tradução de erros HTTP
     footballDataProvider.ts         integração com football-data.org + validação de catálogo/plano
@@ -43,8 +43,11 @@ src/services/sportsData/
     pathEngine.ts                   caminho para título / classificação / rebaixamento
     scenarioEngine.ts                cenários otimista / realista / pessimista
     standingsEnrichment.ts          preenche form/nextMatch/percentage a partir de standings+fixtures
+    classificationZones.ts          bandas finas de zona (Libertadores/Pré-Libertadores/Sul-Americana/rebaixamento)
+    teamObjective.ts                deriva o objetivo do time (título/zona/risco) só por posição — nunca por TeamStanding.status
+    tableSimulator.ts               recalcula a tabela a partir de resultados simulados pelo usuário
   competitions/
-    competitionRegistry.ts          catálogo de competições e seus códigos football-data.org
+    competitionRegistry.ts          catálogo de competições e seus códigos football-data.org (BRASILEIRAO_COMPETITION_ID é a única em uso pela UI)
   __tests__/                       testes unitários (vitest)
 ```
 
@@ -101,7 +104,7 @@ Causas mais comuns de cair em mock mesmo com chave configurada:
 - competição com `status: "needs_mapping"` no registry (`reason=not_mapped`) — código ainda não confirmado;
 - competição com código confirmado mas **fora do plano gratuito** (`reason=provider_down` ou `unavailable_plan` já filtrado antes mesmo da tentativa — ver seção 6);
 - chave inválida/expirada → 400/401/403 (`reason=invalid_key`);
-- **limite de 10 requisições/minuto do plano gratuito atingido** (`reason=rate_limited`) — a busca de time (`/api/search-team`) faz fan-out sobre todas as competições disponíveis e pode consumir a cota rapidamente com o cache frio; depois do primeiro aquecimento (30 min de TTL), buscas subsequentes não geram novas chamadas externas;
+- **limite de 10 requisições/minuto do plano gratuito atingido** (`reason=rate_limited`) — raro hoje, já que o app busca apenas a competição única (Brasileirão Série A); depois do primeiro aquecimento (30 min de TTL), buscas subsequentes não geram novas chamadas externas;
 - `season` sem dados publicados ainda pelo provedor para aquela competição (`reason=invalid_data`) — ver seção 5.1;
 - servidor não reiniciado depois de editar `.env.local`.
 
@@ -130,30 +133,20 @@ Mas ter um código no registry não garante acesso: `providers/footballDataProvi
 - código não encontrado no catálogo → `status: "needs_mapping"`;
 - catálogo não pôde ser verificado (sem chave, erro de rede) → mantém o status base do registry; o mecanismo normal de fallback (seção 4) cuida do resto.
 
-`GET /api/competitions` já devolve só as competições com `status: "available"` resolvido nesse momento; passe `?showUnavailable=true` para incluir as demais (usado pela seção "Outras competições em análise" da home).
+> Nota: o app está hoje escopado exclusivamente ao Brasileirão Série A (`BRASILEIRAO_COMPETITION_ID` em `competitionRegistry.ts`) — a UI não lista nem busca outras competições. O registry continua guardando as demais entradas como dado de referência (`needs_mapping`), mas nenhuma rota HTTP as expõe mais; os antigos `/api/competitions`, `/api/search-team` e `/api/team-competitions` (busca de time entre competições) foram removidos junto com essa migração.
 
-## 7. Busca de time entre competições (`/api/search-team`, `/api/team-competitions`)
-
-`teamSearch.ts` agrega, sob demanda, os times de **todas** as competições atualmente `status: "available"` (via `getTeams()`, já cacheado), filtra por nome (case-insensitive) e agrupa por `teamId` — a football-data.org usa o mesmo ID numérico de time em todas as competições, então um time que aparece em duas competições (ex.: Arsenal na Premier League e na Champions League) é mesclado em um único resultado com as duas competições listadas.
-
-Times cuja competição só retornou dados mockados (`isMock: true`) são **excluídos** do índice de busca — a busca nunca associa um time real a uma competição de forma fictícia. Isso também significa que, com o cache frio, a primeira busca após reiniciar o servidor pode consumir vários requests reais de uma vez (um por competição disponível); buscas seguintes reusam o cache de 30 min.
-
-## 8. Como testar os endpoints internos
+## 7. Como testar os endpoints internos
 
 Com o servidor rodando (`npm run dev`):
 
 ```bash
-curl "http://localhost:3000/api/competitions"
-curl "http://localhost:3000/api/competitions?showUnavailable=true"
 curl "http://localhost:3000/api/standings?competitionId=brasileirao-serie-a"
-curl "http://localhost:3000/api/fixtures?competitionId=premier-league"
-curl "http://localhost:3000/api/teams?competitionId=premier-league"
-curl "http://localhost:3000/api/team-path?competitionId=premier-league&teamId=57"
-curl "http://localhost:3000/api/search-team?query=flamengo"
-curl "http://localhost:3000/api/team-competitions?teamId=1783"
+curl "http://localhost:3000/api/fixtures?competitionId=brasileirao-serie-a"
+curl "http://localhost:3000/api/teams?competitionId=brasileirao-serie-a"
+curl "http://localhost:3000/api/team-path?competitionId=brasileirao-serie-a&teamId=1783"
 
 # forçar nova busca (ignora cache)
-curl "http://localhost:3000/api/standings?competitionId=premier-league&refresh=true"
+curl "http://localhost:3000/api/standings?competitionId=brasileirao-serie-a&refresh=true"
 ```
 
 Testes unitários das funções puras (motor de cálculo, cenários, normalizadores, cache, fallback):
@@ -162,13 +155,13 @@ Testes unitários das funções puras (motor de cálculo, cenários, normalizado
 npm run test
 ```
 
-## 9. Como fazer deploy sem expor chaves
+## 8. Como fazer deploy sem expor chaves
 
 - Vercel: configure `FOOTBALL_DATA_KEY`, `SPORTS_DATA_PROVIDER`, `SPORTS_DATA_CACHE_TTL_SECONDS` e `SHOW_TECHNICAL_DATA_STATUS` em **Project Settings → Environment Variables**. Nunca prefixe essas variáveis com `NEXT_PUBLIC_` — isso as exporia no bundle do navegador.
 - Netlify: configure as mesmas variáveis em **Site settings → Environment variables**.
 - Nenhuma chave é lida fora de `src/app/api/*` e `src/services/sportsData/providers/footballDataProvider.ts`, ambos executados exclusivamente no servidor.
 
-## 10. Campos derivados de exibição (`form`, `nextMatch`, `percentage`)
+## 9. Campos derivados de exibição (`form`, `nextMatch`, `percentage`)
 
 `/api/standings` e `/api/team-path` passam os `TeamStanding[]` por `enrichStandings()` (`calculations/standingsEnrichment.ts`) antes de responder:
 

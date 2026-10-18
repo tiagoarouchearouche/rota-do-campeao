@@ -3,10 +3,12 @@
 import { useCallback, useState } from "react";
 import type { Competition, DataProvider, Fixture, TeamStanding } from "@/services/sportsData/types";
 import { getMyTeamId, setMyTeamId as persistMyTeamId } from "@/lib/userPreferences";
+import { trackEvent } from "@/lib/analytics";
 import { Hero } from "@/components/Hero";
 import { MyTeamSelector } from "@/components/MyTeamSelector";
 import { MyTeamCard } from "@/components/MyTeamCard";
 import { ChampionshipSituation } from "@/components/ChampionshipSituation";
+import { BrasileiraoAnalysis } from "@/components/BrasileiraoAnalysis";
 import { StandingsTable } from "@/components/StandingsTable";
 import { NextRound } from "@/components/NextRound";
 import { IfItEndedToday } from "@/components/IfItEndedToday";
@@ -95,6 +97,7 @@ export function BrasileiraoHomeClient({
   function selectMyTeam(teamId: string) {
     setMyTeamIdState(teamId);
     persistMyTeamId(teamId);
+    trackEvent("select_team", { teamId });
   }
 
   const refresh = useCallback(async () => {
@@ -125,63 +128,75 @@ export function BrasileiraoHomeClient({
     <main id="main-content" className="flex flex-1 flex-col">
       <Hero round={round} totalRounds={totalRounds} updatedAt={updatedAt} />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-12">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <DataSourceBadge source={source} isMock={isMock} empty={standings.length === 0} />
-            <LastUpdatedInfo updatedAt={updatedAt} />
+      <div className="mx-auto w-full max-w-6xl px-4 py-12">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_300px]">
+          <div className="flex flex-col gap-12">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <DataSourceBadge source={source} isMock={isMock} empty={standings.length === 0} />
+                <LastUpdatedInfo updatedAt={updatedAt} />
+              </div>
+              <RefreshDataButton onRefresh={refresh} />
+            </div>
+
+            <ApiWarningBanner isMock={isMock} />
+            <DataStatusPanel
+              source={source}
+              updatedAt={updatedAt}
+              isMock={isMock}
+              cached={cached}
+              competition={competition}
+              showTechnicalStatus={showTechnicalStatus}
+            />
+
+            <section id="meu-time" className="flex flex-col gap-4">
+              <MyTeamSelector standings={standings} value={myTeamId} onSelect={selectMyTeam} />
+              {myTeam && <MyTeamCard team={myTeam} standings={standings} fixtures={fixtures} competition={competition} />}
+            </section>
+
+            <AdSlot placement="after-team-summary" />
+
+            <ChampionshipSituation standings={standings} competition={competition} />
+
+            <section id="classificacao" className="flex flex-col gap-4">
+              <h2 className="font-display text-xl font-bold uppercase text-white">Classificação</h2>
+              <StandingsTable standings={standings} competition={competition} myTeamId={myTeamId} />
+            </section>
+
+            <AdSlot placement="after-standings" />
+
+            <NextRound fixtures={fixtures} standings={standings} competition={competition} />
+
+            <AdSlot placement="before-if-ended-today" className="sm:hidden" />
+
+            <IfItEndedToday standings={standings} competition={competition} />
+
+            <Simulator standings={standings} fixtures={fixtures} competition={competition} myTeamId={myTeamId} />
+
+            <TeamComparison standings={standings} fixtures={fixtures} />
+
+            <section className="flex flex-col gap-4">
+              <Tabs tabs={SECONDARY_TABS} active={secondaryTab} onChange={setSecondaryTab} />
+              {secondaryTab === "jogos" ? (
+                <FixturesList fixtures={fixtures} />
+              ) : (
+                <CompetitionStats standings={standings} fixtures={fixtures} />
+              )}
+            </section>
+
+            <BrasileiraoAnalysis standings={standings} competition={competition} />
+
+            <HowItWorks id="como-funciona" />
+
+            <FaqSection items={FAQ_ITEMS} />
           </div>
-          <RefreshDataButton onRefresh={refresh} />
+
+          <aside className="hidden lg:block">
+            <div className="sticky top-20">
+              <AdSlot placement="desktop-sidebar" format="vertical" />
+            </div>
+          </aside>
         </div>
-
-        <ApiWarningBanner isMock={isMock} />
-        <DataStatusPanel
-          source={source}
-          updatedAt={updatedAt}
-          isMock={isMock}
-          cached={cached}
-          competition={competition}
-          showTechnicalStatus={showTechnicalStatus}
-        />
-
-        <AdSlot placement="hero-banner" />
-
-        <section id="meu-time" className="flex flex-col gap-4">
-          <MyTeamSelector standings={standings} value={myTeamId} onSelect={selectMyTeam} />
-          {myTeam && <MyTeamCard team={myTeam} standings={standings} fixtures={fixtures} competition={competition} />}
-        </section>
-
-        <ChampionshipSituation standings={standings} competition={competition} />
-
-        <section id="classificacao" className="flex flex-col gap-4">
-          <h2 className="font-display text-xl font-bold uppercase text-white">Classificação</h2>
-          <StandingsTable standings={standings} competition={competition} myTeamId={myTeamId} />
-        </section>
-
-        <AdSlot placement="content-banner" />
-
-        <NextRound fixtures={fixtures} standings={standings} competition={competition} />
-
-        <IfItEndedToday standings={standings} competition={competition} />
-
-        <Simulator standings={standings} fixtures={fixtures} competition={competition} myTeamId={myTeamId} />
-
-        <TeamComparison standings={standings} fixtures={fixtures} />
-
-        <section className="flex flex-col gap-4">
-          <Tabs tabs={SECONDARY_TABS} active={secondaryTab} onChange={setSecondaryTab} />
-          {secondaryTab === "jogos" ? (
-            <FixturesList fixtures={fixtures} />
-          ) : (
-            <CompetitionStats standings={standings} fixtures={fixtures} />
-          )}
-        </section>
-
-        <HowItWorks id="como-funciona" />
-
-        <FaqSection items={FAQ_ITEMS} />
-
-        <AdSlot placement="footer" />
       </div>
     </main>
   );

@@ -1,4 +1,13 @@
-export type AdPlacement = "hero-banner" | "content-banner" | "sidebar" | "post-simulation" | "footer";
+export type AdPlacement =
+  | "hero-banner"
+  | "content-banner"
+  | "sidebar"
+  | "post-simulation"
+  | "footer"
+  | "after-team-summary"
+  | "after-standings"
+  | "before-if-ended-today"
+  | "desktop-sidebar";
 export type AdFormat = "horizontal" | "vertical" | "square";
 
 const DEFAULT_MIN_HEIGHT: Record<AdFormat, number> = {
