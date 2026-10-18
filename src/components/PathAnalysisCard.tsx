@@ -6,14 +6,14 @@ import type { PathAnalysis } from "@/services/sportsData/types";
 
 const RISK_STYLES: Record<PathAnalysis["riskLevel"], string> = {
   low: "bg-success/15 text-success",
-  medium: "bg-blue-400/15 text-blue-300",
+  medium: "bg-info/15 text-info",
   high: "bg-warning/15 text-warning",
   critical: "bg-danger/15 text-danger",
 };
 
 const RISK_NUMBER_COLOR: Record<PathAnalysis["riskLevel"], string> = {
   low: "text-success",
-  medium: "text-blue-300",
+  medium: "text-info",
   high: "text-warning",
   critical: "text-danger",
 };

@@ -16,24 +16,25 @@ const inter = Inter({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const DEFAULT_TITLE = "Rota do Campeão";
+const BRAND_NAME = "Rota do Campeão";
+const HOME_TITLE = "Rota do Campeão — Tabela, jogos e simulações do Brasileirão Série A";
 const DEFAULT_DESCRIPTION =
-  "Pesquise seu time, descubra a competição, consulte a tabela e simule o caminho até o título, a classificação ou a fuga do rebaixamento.";
+  "Acompanhe a tabela do Brasileirão Série A, veja jogos, situação do seu time e simule os caminhos para título, Libertadores ou permanência.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: DEFAULT_TITLE, template: `%s | ${DEFAULT_TITLE}` },
+  title: { default: HOME_TITLE, template: `%s | ${BRAND_NAME}` },
   description: DEFAULT_DESCRIPTION,
   openGraph: {
     type: "website",
-    siteName: DEFAULT_TITLE,
-    title: DEFAULT_TITLE,
+    siteName: BRAND_NAME,
+    title: HOME_TITLE,
     description: DEFAULT_DESCRIPTION,
     locale: "pt_BR",
   },
   twitter: {
     card: "summary_large_image",
-    title: DEFAULT_TITLE,
+    title: HOME_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
 };

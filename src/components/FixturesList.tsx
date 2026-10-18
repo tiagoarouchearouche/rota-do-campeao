@@ -1,4 +1,5 @@
 import type { Fixture } from "@/services/sportsData/types";
+import { TeamLogo } from "@/components/TeamLogo";
 
 function groupByRound(fixtures: Fixture[]): [string, Fixture[]][] {
   const groups = new Map<string, Fixture[]>();
@@ -16,7 +17,10 @@ function FixtureRow({ fixture }: { fixture: Fixture }) {
 
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5 text-sm last:border-0">
-      <span className="flex-1 truncate text-right text-white">{fixture.homeTeamName}</span>
+      <span className="flex flex-1 items-center justify-end gap-2 truncate text-right text-white">
+        {fixture.homeTeamName}
+        <TeamLogo team={fixture.homeTeamName} size="sm" />
+      </span>
       {isFinished ? (
         <span className="shrink-0 rounded-md bg-surface px-2 py-0.5 text-xs font-bold text-white">
           {fixture.homeGoals} - {fixture.awayGoals}
@@ -26,7 +30,10 @@ function FixtureRow({ fixture }: { fixture: Fixture }) {
           {fixture.status === "live" ? "AO VIVO" : formattedDate}
         </span>
       )}
-      <span className="flex-1 truncate text-white">{fixture.awayTeamName}</span>
+      <span className="flex flex-1 items-center gap-2 truncate text-white">
+        <TeamLogo team={fixture.awayTeamName} size="sm" />
+        {fixture.awayTeamName}
+      </span>
     </div>
   );
 }

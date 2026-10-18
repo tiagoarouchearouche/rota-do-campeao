@@ -355,6 +355,9 @@ export const competitions: Competition[] = [
   },
 ];
 
+/** The app is scoped exclusively to this competition — see CLAUDE.md. */
+export const BRASILEIRAO_COMPETITION_ID = "brasileirao-serie-a";
+
 export function getCompetitionById(id: string): Competition | undefined {
   return competitions.find((competition) => competition.id === id);
 }

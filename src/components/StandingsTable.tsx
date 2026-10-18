@@ -3,28 +3,27 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Trophy, ShieldAlert, TriangleAlert } from "lucide-react";
-import type { TeamStanding } from "@/services/sportsData/types";
+import type { Competition, TeamStanding } from "@/services/sportsData/types";
+import { getZoneBand, ZONE_LEGEND, type ZoneTone } from "@/services/sportsData/calculations/classificationZones";
+import { TeamLogo } from "@/components/TeamLogo";
 
-const ROW_STYLES: Record<string, string> = {
-  title_race: "border-l-4 border-success bg-success/5",
-  qualification_zone: "border-l-4 border-blue-400 bg-blue-400/5",
-  mid_table: "border-l-4 border-transparent",
-  relegation_risk: "border-l-4 border-warning bg-warning/5",
-  relegation_zone: "border-l-4 border-danger bg-danger/5",
+const TONE_STYLES: Record<ZoneTone, string> = {
+  title: "border-l-4 border-success bg-success/5",
+  libertadores: "border-l-4 border-success bg-success/5",
+  "pre-libertadores": "border-l-4 border-info bg-info/5",
+  sula: "border-l-4 border-sula bg-sula/5",
+  neutral: "border-l-4 border-transparent",
+  relegation: "border-l-4 border-danger bg-danger/5",
 };
 
-const ZONE_ICON: Partial<Record<string, typeof Trophy>> = {
-  title_race: Trophy,
-  relegation_risk: TriangleAlert,
-  relegation_zone: ShieldAlert,
+const TONE_SWATCH: Record<ZoneTone, string> = {
+  title: "bg-success",
+  libertadores: "bg-success",
+  "pre-libertadores": "bg-info",
+  sula: "bg-sula",
+  neutral: "bg-muted-2",
+  relegation: "bg-danger",
 };
-
-const LEGEND: { status: string; label: string; className: string }[] = [
-  { status: "title_race", label: "Título / classificação principal", className: "bg-success" },
-  { status: "qualification_zone", label: "Classificação", className: "bg-blue-400" },
-  { status: "relegation_risk", label: "Risco de rebaixamento", className: "bg-warning" },
-  { status: "relegation_zone", label: "Rebaixamento", className: "bg-danger" },
-];
 
 /** Internal form letters follow the provider convention (W/D/L in English) — translate only for display. */
 const FORM_LABEL_PT: Record<string, string> = { W: "V", D: "E", L: "D" };
@@ -36,6 +35,7 @@ function FormBadges({ form }: { form?: string }) {
       {form.split("").map((letter, index) => (
         <span
           key={index}
+          title={letter === "W" ? "Vitória" : letter === "D" ? "Empate" : "Derrota"}
           className={`flex h-5 w-5 items-center justify-center rounded-sm text-[10px] font-bold text-ink ${
             letter === "W" ? "bg-success" : letter === "D" ? "bg-muted-2" : "bg-danger"
           }`}
@@ -47,33 +47,37 @@ function FormBadges({ form }: { form?: string }) {
   );
 }
 
-function ZoneIcon({ status }: { status?: string }) {
-  const Icon = status ? ZONE_ICON[status] : undefined;
-  if (!Icon) return null;
-  return <Icon size={12} className="shrink-0" aria-hidden="true" />;
+function ZoneIcon({ position, tone, status }: { position: number; tone: ZoneTone | null; status?: string }) {
+  if (position === 1) return <Trophy size={12} className="shrink-0" aria-hidden="true" />;
+  if (tone === "relegation") return <ShieldAlert size={12} className="shrink-0" aria-hidden="true" />;
+  if (status === "relegation_risk") return <TriangleAlert size={12} className="shrink-0" aria-hidden="true" />;
+  return null;
 }
 
 export function StandingsTable({
   standings,
-  competitionId,
+  competition,
+  myTeamId,
 }: {
   standings: TeamStanding[];
-  competitionId: string;
+  competition: Competition;
+  myTeamId?: string | null;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const totalTeams = standings.length;
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Desktop / tablet: full table, primeiras duas colunas fixas durante rolagem horizontal */}
+      {/* Desktop / tablet: full table, primeiras duas colunas fixas durante rolagem horizontal, cabeçalho sticky ao rolar a página */}
       <div className="hidden overflow-x-auto rounded-md border border-border sm:block">
         <table className="w-full min-w-[760px] text-sm">
-          <caption className="sr-only">Tabela de classificação</caption>
-          <thead className="bg-graphite text-left text-xs uppercase text-muted">
+          <caption className="sr-only">Tabela de classificação do Brasileirão Série A</caption>
+          <thead className="sticky top-0 z-20 bg-graphite text-left text-xs uppercase text-muted">
             <tr>
-              <th scope="col" className="sticky left-0 z-10 bg-graphite px-3 py-2">
+              <th scope="col" className="sticky left-0 z-20 bg-graphite px-3 py-2">
                 #
               </th>
-              <th scope="col" className="sticky left-8 z-10 bg-graphite px-3 py-2">
+              <th scope="col" className="sticky left-8 z-20 bg-graphite px-3 py-2">
                 Time
               </th>
               <th scope="col" className="px-3 py-2 text-center font-bold">
@@ -112,44 +116,64 @@ export function StandingsTable({
             </tr>
           </thead>
           <tbody>
-            {standings.map((team) => (
-              <tr key={team.teamId} className={`${ROW_STYLES[team.status ?? "mid_table"]} border-b border-border last:border-0`}>
-                <td className="sticky left-0 z-10 bg-ink px-3 py-2 font-medium">
-                  <span className="flex items-center gap-1">
-                    {team.position}
-                    <ZoneIcon status={team.status} />
-                  </span>
-                </td>
-                <td className="sticky left-8 z-10 bg-ink px-3 py-2">
-                  <Link href={`/competicao/${competitionId}/time/${team.teamId}`} className="font-medium hover:text-lime hover:underline">
-                    {team.teamName}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 text-center font-bold">{team.points}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.played}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.wins}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.draws}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.losses}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.goalsFor}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.goalsAgainst}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.goalDifference}</td>
-                <td className="px-3 py-2 text-center text-muted">{team.percentage ?? "—"}%</td>
-                <td className="px-3 py-2">
-                  <FormBadges form={team.form} />
-                </td>
-                <td className="whitespace-nowrap px-3 py-2 text-xs text-muted">{team.nextMatch ?? "—"}</td>
-              </tr>
-            ))}
+            {standings.map((team) => {
+              const band = getZoneBand(team.position, totalTeams, competition);
+              const tone = band?.tone ?? null;
+              const isMyTeam = myTeamId === team.teamId;
+              return (
+                <tr
+                  key={team.teamId}
+                  className={`${tone ? TONE_STYLES[tone] : TONE_STYLES.neutral} border-b border-border last:border-0 ${
+                    isMyTeam ? "bg-lime/10" : ""
+                  }`}
+                >
+                  <td className="sticky left-0 z-10 bg-ink px-3 py-2 font-medium">
+                    <span className="flex items-center gap-1">
+                      {team.position}
+                      <ZoneIcon position={team.position} tone={tone} status={team.status} />
+                    </span>
+                  </td>
+                  <td className="sticky left-8 z-10 bg-ink px-3 py-2">
+                    <Link href={`/time/${team.teamId}`} className="flex items-center gap-2 font-medium hover:text-lime hover:underline">
+                      <TeamLogo team={team.teamName} size="sm" />
+                      {team.teamName}
+                      {isMyTeam && <span className="rounded-sm bg-lime px-1.5 py-0.5 text-[10px] font-bold text-ink">SEU TIME</span>}
+                    </Link>
+                  </td>
+                  <td className="px-3 py-2 text-center font-bold">{team.points}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.played}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.wins}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.draws}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.losses}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.goalsFor}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.goalsAgainst}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.goalDifference}</td>
+                  <td className="px-3 py-2 text-center text-muted">{team.percentage ?? "—"}%</td>
+                  <td className="px-3 py-2">
+                    <FormBadges form={team.form} />
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-xs text-muted">{team.nextMatch ?? "—"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Mobile: cards com posição/time/pontos/jogos/saldo visíveis; resto atrás de um toggle */}
+      {/* Mobile: cards com posição/time/jogos/saldo/pontos visíveis; resto atrás de um toggle */}
       <ul className="flex flex-col gap-2 sm:hidden">
         {standings.map((team) => {
           const isOpen = expanded === team.teamId;
+          const band = getZoneBand(team.position, totalTeams, competition);
+          const tone = band?.tone ?? null;
+          const isMyTeam = myTeamId === team.teamId;
           return (
-            <li key={team.teamId} className={`rounded-md border border-border ${ROW_STYLES[team.status ?? "mid_table"]}`}>
+            <li
+              key={team.teamId}
+              className={`rounded-md border border-border ${tone ? TONE_STYLES[tone] : TONE_STYLES.neutral} ${
+                isMyTeam ? "bg-lime/10" : ""
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => setExpanded(isOpen ? null : team.teamId)}
@@ -157,14 +181,15 @@ export function StandingsTable({
                 aria-controls={`team-details-${team.teamId}`}
                 className="flex w-full items-center justify-between gap-2 p-3 text-left"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-surface text-xs font-bold">
                     {team.position}
                   </span>
-                  <span className="font-semibold text-white">{team.teamName}</span>
-                  <ZoneIcon status={team.status} />
+                  <TeamLogo team={team.teamName} size="sm" />
+                  <span className="truncate font-semibold text-white">{team.teamName}</span>
+                  <ZoneIcon position={team.position} tone={tone} status={team.status} />
                 </div>
-                <div className="flex items-center gap-2 text-muted">
+                <div className="flex shrink-0 items-center gap-2 text-muted">
                   <span className="text-xs">
                     {team.played}J · SG {team.goalDifference}
                   </span>
@@ -188,10 +213,7 @@ export function StandingsTable({
                     <FormBadges form={team.form} />
                     <span>{team.nextMatch ?? "Próximo jogo a definir"}</span>
                   </div>
-                  <Link
-                    href={`/competicao/${competitionId}/time/${team.teamId}`}
-                    className="mt-1 self-start rounded-md bg-lime px-3 py-1.5 text-xs font-bold text-ink"
-                  >
+                  <Link href={`/time/${team.teamId}`} className="mt-1 self-start rounded-md bg-lime px-3 py-1.5 text-xs font-bold text-ink">
                     Analisar este time
                   </Link>
                 </div>
@@ -202,9 +224,9 @@ export function StandingsTable({
       </ul>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
-        {LEGEND.map((item) => (
-          <span key={item.status} className="flex items-center gap-1.5">
-            <span className={`h-2.5 w-2.5 rounded-sm ${item.className}`} aria-hidden="true" />
+        {ZONE_LEGEND.map((item) => (
+          <span key={item.tone} className="flex items-center gap-1.5">
+            <span className={`h-2.5 w-2.5 rounded-sm ${TONE_SWATCH[item.tone]}`} aria-hidden="true" />
             {item.label}
           </span>
         ))}

@@ -12,7 +12,6 @@ import {
   generatePessimisticScenario,
 } from "@/services/sportsData/calculations/scenarioEngine";
 import { enrichStandings } from "@/services/sportsData/calculations/standingsEnrichment";
-import { getCompetitionsForTeam } from "@/services/sportsData/teamSearch";
 import { shouldShowTechnicalStatus } from "@/services/sportsData/sportsDataService";
 import { getCompetitionById } from "@/services/sportsData/competitions/competitionRegistry";
 import { apiError, competitionNotFoundResponse, teamNotFoundResponse } from "@/lib/apiErrors";
@@ -62,9 +61,6 @@ export async function GET(request: NextRequest) {
 
     const decisiveMatches = identifyDirectConfrontations(team, standings, fixtures);
 
-    const teamCompetitions = !standingsEnvelope.isMock ? await getCompetitionsForTeam(teamId) : null;
-    const otherCompetitions = teamCompetitions?.competitions.filter((c) => c.competitionId !== competitionId) ?? [];
-
     const isMock = standingsEnvelope.isMock || fixturesEnvelope.isMock;
     const source = standingsEnvelope.isMock ? fixturesEnvelope.source : standingsEnvelope.source;
     const warning = standingsEnvelope.warning ?? fixturesEnvelope.warning;
@@ -89,7 +85,6 @@ export async function GET(request: NextRequest) {
       isMock,
       cached,
       showTechnicalStatus: shouldShowTechnicalStatus(),
-      otherCompetitions,
       ...(warning ? { warning } : {}),
     };
 

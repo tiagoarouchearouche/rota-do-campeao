@@ -14,6 +14,8 @@
   --color-danger: #ef4444;
   --color-warning: #fbbf24;
   --color-success: #22c55e;
+  --color-info: #60a5fa;
+  --color-sula: #38bdf8;
 }
 
 @theme inline {
@@ -29,6 +31,8 @@
   --color-danger: var(--color-danger);
   --color-warning: var(--color-warning);
   --color-success: var(--color-success);
+  --color-info: var(--color-info);
+  --color-sula: var(--color-sula);
   --font-display: var(--font-oswald);
   --font-sans: var(--font-inter);
 }

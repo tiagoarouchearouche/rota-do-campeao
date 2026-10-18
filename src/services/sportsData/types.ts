@@ -148,7 +148,6 @@ export type TeamPathResponse = {
   warning?: string;
   cached?: boolean;
   showTechnicalStatus?: boolean;
-  otherCompetitions?: TeamSearchCompetitionRef[];
 };
 
 /**
@@ -157,27 +156,6 @@ export type TeamPathResponse = {
  * but is intentionally disconnected from sportsDataService and the UI — see CLAUDE.md.
  */
 export type SportsDataProviderMode = "football-data" | "mock";
-
-export type TeamSearchCompetitionRef = {
-  competitionId: string;
-  name: string;
-  code: string;
-  status: CompetitionAvailability;
-};
-
-export type TeamSearchResult = {
-  teamId: string;
-  teamName: string;
-  logo?: string;
-  competitions: TeamSearchCompetitionRef[];
-};
-
-export type TeamSearchResponse = {
-  query: string;
-  results: TeamSearchResult[];
-  source: DataProvider;
-  updatedAt: string;
-};
 
 /** Raw fetch result from an external provider before validation/normalization. */
 export type ProviderFetchResult<T> = {

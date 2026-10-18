@@ -28,7 +28,6 @@ export function decodeShareState(encoded: string): ShareState | null {
 
 export function buildTeamShareUrl(params: {
   origin: string;
-  competitionId: string;
   teamId: string;
   season: number;
   scenario: ScenarioName;
@@ -38,7 +37,7 @@ export function buildTeamShareUrl(params: {
     season: params.season,
     simulatedAt: new Date().toISOString(),
   });
-  const url = new URL(`/competicao/${params.competitionId}/time/${params.teamId}`, params.origin);
+  const url = new URL(`/time/${params.teamId}`, params.origin);
   url.searchParams.set("season", String(params.season));
   url.searchParams.set("scenario", params.scenario);
   url.searchParams.set("state", state);

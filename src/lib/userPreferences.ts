@@ -1,7 +1,7 @@
 import type { ScenarioName } from "@/services/sportsData/types";
 
 const KEYS = {
-  lastCompetitionId: "rota-do-campeao:last-competition-id",
+  myTeamId: "rota-do-campeao:my-team-id",
   lastTeamId: "rota-do-campeao:last-team-id",
   scenarioPreference: "rota-do-campeao:scenario-preference",
 } as const;
@@ -24,12 +24,12 @@ function safeSet(key: string, value: string): void {
   }
 }
 
-export function getLastCompetitionId(): string | null {
-  return safeGet(KEYS.lastCompetitionId);
+export function getMyTeamId(): string | null {
+  return safeGet(KEYS.myTeamId);
 }
 
-export function setLastCompetitionId(id: string): void {
-  safeSet(KEYS.lastCompetitionId, id);
+export function setMyTeamId(id: string): void {
+  safeSet(KEYS.myTeamId, id);
 }
 
 export function getLastTeamId(): string | null {

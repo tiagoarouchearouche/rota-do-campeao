@@ -9,7 +9,7 @@ export default function NotFound() {
       </span>
       <div>
         <h1 className="font-display text-2xl font-bold text-white">Página não encontrada</h1>
-        <p className="mt-2 text-sm text-muted">Essa competição ou time não existe, ou o link está desatualizado.</p>
+        <p className="mt-2 text-sm text-muted">Esse time não existe no Brasileirão Série A, ou o link está desatualizado.</p>
       </div>
       <Link href="/" className="rounded-md bg-lime px-4 py-2 text-sm font-bold text-ink hover:bg-lime-dark">
         Voltar ao início

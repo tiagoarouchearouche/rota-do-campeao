@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Menu, X, Trophy } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "Competições", href: "/#competicoes" },
+  { label: "Classificação", href: "/#classificacao" },
+  { label: "Próxima rodada", href: "/#proxima-rodada" },
   { label: "Como funciona", href: "/#como-funciona" },
 ];
 
