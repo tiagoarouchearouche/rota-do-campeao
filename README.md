@@ -78,7 +78,7 @@ A estrutura está preparada, mas **nenhum anúncio real está conectado** — `s
 
 ## ads.txt
 
-Ainda não existe `public/ads.txt` — **não crie com uma linha inventada**. Quando a conta do AdSense estiver aprovada, o próprio painel do Google fornece a linha oficial (algo como `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`); cole essa linha exata em `public/ads.txt`.
+`public/ads.txt` já existe com a linha oficial da conta AdSense do site (`google.com, pub-3395148434417478, DIRECT, f08c47fec0942fa0`), servida em `/ads.txt`. Se a conta AdSense mudar (nova conta, novo publisher ID), atualize esse arquivo com o valor exato que o painel do Google fornecer.
 
 ## Analytics
 
