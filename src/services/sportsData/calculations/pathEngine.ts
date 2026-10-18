@@ -1,10 +1,5 @@
 import type { Competition, Fixture, PathAnalysis, RiskLevel, TeamStanding } from "../types";
-
-function getRemainingFixtures(team: TeamStanding, fixtures: Fixture[]): Fixture[] {
-  return fixtures.filter(
-    (f) => f.status !== "finished" && (f.homeTeamId === team.teamId || f.awayTeamId === team.teamId)
-  );
-}
+import { getRemainingMatches as getRemainingFixtures, getMaximumPossiblePoints } from "./matchHelpers";
 
 function computeSafetyMargin(remainingGames: number): number {
   if (remainingGames <= 0) return 0;
@@ -37,10 +32,7 @@ const RISK_LABEL: Record<RiskLevel, string> = {
   critical: "crítico",
 };
 
-export function calculateMaximumPossiblePoints(team: TeamStanding, fixtures: Fixture[]): number {
-  const remaining = getRemainingFixtures(team, fixtures);
-  return team.points + remaining.length * 3;
-}
+export const calculateMaximumPossiblePoints = getMaximumPossiblePoints;
 
 /**
  * Decisive matches = remaining games against opponents currently close to the

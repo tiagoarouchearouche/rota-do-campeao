@@ -1,10 +1,19 @@
-import type { Competition, TeamStanding } from "@/services/sportsData/types";
+import type { Competition, Fixture, TeamStanding } from "@/services/sportsData/types";
+import { getRemainingMatches } from "@/services/sportsData/calculations/matchHelpers";
 
 /**
  * Original, data-derived prose (never invented numbers/probabilities) so the page reads as
  * analysis, not just a table pulled from an API — see CLAUDE.md "conteúdo textual original".
  */
-export function BrasileiraoAnalysis({ standings, competition }: { standings: TeamStanding[]; competition: Competition }) {
+export function BrasileiraoAnalysis({
+  standings,
+  fixtures,
+  competition,
+}: {
+  standings: TeamStanding[];
+  fixtures: Fixture[];
+  competition: Competition;
+}) {
   if (standings.length < 2) return null;
 
   const totalTeams = standings.length;
@@ -21,8 +30,7 @@ export function BrasileiraoAnalysis({ standings, competition }: { standings: Tea
   const firstOutsideZ4 = relegationSpots > 0 ? standings[totalTeams - relegationSpots - 1] : undefined;
   const relegationDiff = firstInsideZ4 && firstOutsideZ4 ? firstOutsideZ4.points - firstInsideZ4.points : 0;
 
-  const maxRemainingGames = Math.max(...standings.map((t) => t.played));
-  const leaderRemaining = Math.max(0, maxRemainingGames - leader.played);
+  const leaderRemaining = getRemainingMatches(leader, fixtures).length;
 
   return (
     <section className="flex flex-col gap-5">

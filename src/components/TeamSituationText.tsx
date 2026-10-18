@@ -1,9 +1,6 @@
 import type { Competition, Fixture, TeamStanding } from "@/services/sportsData/types";
 import { resolveTeamObjective } from "@/services/sportsData/calculations/teamObjective";
-
-function remainingGamesFor(team: TeamStanding, fixtures: Fixture[]): number {
-  return fixtures.filter((f) => f.status !== "finished" && (f.homeTeamId === team.teamId || f.awayTeamId === team.teamId)).length;
-}
+import { getRemainingMatches } from "@/services/sportsData/calculations/matchHelpers";
 
 /**
  * Four distinct templates (leader / continental zone / mid-table / relegation zone) so the 20
@@ -22,7 +19,7 @@ export function TeamSituationText({
   competition: Competition;
 }) {
   const totalTeams = standings.length;
-  const remaining = remainingGamesFor(team, fixtures);
+  const remaining = getRemainingMatches(team, fixtures).length;
   const objective = resolveTeamObjective(team, standings, competition);
 
   let paragraph: string;

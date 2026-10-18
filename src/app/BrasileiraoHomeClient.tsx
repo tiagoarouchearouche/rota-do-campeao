@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import type { Competition, DataProvider, Fixture, TeamStanding } from "@/services/sportsData/types";
 import { getMyTeamId, setMyTeamId as persistMyTeamId } from "@/lib/userPreferences";
 import { trackEvent } from "@/lib/analytics";
+import { getCurrentRound } from "@/services/sportsData/calculations/matchHelpers";
 import { Hero } from "@/components/Hero";
 import { MyTeamSelector } from "@/components/MyTeamSelector";
 import { MyTeamCard } from "@/components/MyTeamCard";
@@ -64,8 +65,8 @@ type Props = {
   initialStandings: TeamStanding[];
   initialFixtures: Fixture[];
   competition: Competition;
-  round?: number;
-  totalRounds?: number;
+  round: number | null;
+  totalRounds: number | null;
   isMock: boolean;
   source: DataProvider;
   updatedAt: string;
@@ -77,8 +78,8 @@ export function BrasileiraoHomeClient({
   initialStandings,
   initialFixtures,
   competition,
-  round,
-  totalRounds,
+  round: initialRound,
+  totalRounds: initialTotalRounds,
   isMock: initialIsMock,
   source: initialSource,
   updatedAt: initialUpdatedAt,
@@ -87,6 +88,8 @@ export function BrasileiraoHomeClient({
 }: Props) {
   const [standings, setStandings] = useState(initialStandings);
   const [fixtures, setFixtures] = useState(initialFixtures);
+  const [round, setRound] = useState(initialRound);
+  const [totalRounds, setTotalRounds] = useState(initialTotalRounds);
   const [isMock, setIsMock] = useState(initialIsMock);
   const [source, setSource] = useState(initialSource);
   const [updatedAt, setUpdatedAt] = useState(initialUpdatedAt);
@@ -113,6 +116,9 @@ export function BrasileiraoHomeClient({
 
       setStandings(standingsJson.data);
       setFixtures(fixturesJson.data);
+      const nextRound = getCurrentRound(fixturesJson.data);
+      setRound(nextRound.round);
+      setTotalRounds(nextRound.totalRounds);
       setIsMock(standingsJson.isMock || fixturesJson.isMock);
       setSource(standingsJson.isMock ? fixturesJson.source : standingsJson.source);
       setCached(Boolean(standingsJson.cached && fixturesJson.cached));
@@ -184,7 +190,7 @@ export function BrasileiraoHomeClient({
               )}
             </section>
 
-            <BrasileiraoAnalysis standings={standings} competition={competition} />
+            <BrasileiraoAnalysis standings={standings} fixtures={fixtures} competition={competition} />
 
             <HowItWorks id="como-funciona" />
 

@@ -74,6 +74,11 @@ export function Simulator({
                 <span className="text-muted-2">×</span>
                 <span className="truncate">{fixture.awayTeamName}</span>
                 <TeamLogo team={fixture.awayTeamName} size="sm" />
+                {fixture.status === "postponed" && (
+                  <span className="shrink-0 rounded-md border border-warning/30 px-1.5 py-0.5 text-[10px] font-medium text-warning">
+                    Adiada
+                  </span>
+                )}
               </div>
               <div className="flex gap-1.5">
                 {OPTIONS.map((option) => (

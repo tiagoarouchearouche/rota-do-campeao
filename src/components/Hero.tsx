@@ -1,6 +1,14 @@
 import Link from "next/link";
 
-export function Hero({ round, totalRounds, updatedAt }: { round?: number; totalRounds?: number; updatedAt?: string }) {
+export function Hero({
+  round,
+  totalRounds,
+  updatedAt,
+}: {
+  round?: number | null;
+  totalRounds?: number | null;
+  updatedAt?: string;
+}) {
   const roundLabel = round && totalRounds ? `Rodada ${round} de ${totalRounds}` : null;
   const updatedLabel = updatedAt
     ? new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(updatedAt))

@@ -9,7 +9,7 @@ export type TeamStatus =
   | "relegation_risk"
   | "relegation_zone";
 
-export type MatchStatus = "scheduled" | "live" | "finished";
+export type MatchStatus = "scheduled" | "live" | "finished" | "postponed";
 
 export type CompetitionAvailability = "available" | "unavailable_plan" | "coming_soon" | "needs_mapping";
 

@@ -2,11 +2,20 @@ import { Flame, TriangleAlert, Globe2 } from "lucide-react";
 import type { Competition, Fixture, TeamStanding } from "@/services/sportsData/types";
 import { MatchCard, type MatchBadge } from "@/components/MatchCard";
 
+/**
+ * Picks the round to spotlight using only genuinely scheduled/live fixtures, chronologically —
+ * a postponed fixture (old date, no longer real) must never anchor this choice, or "próxima
+ * rodada" ends up pointing at a round that's actually long over. Once the round is chosen,
+ * any postponed fixture that still belongs to it is included (with its own "adiada" label in
+ * MatchCard) rather than silently dropped.
+ */
 function pickNextRound(fixtures: Fixture[]): Fixture[] {
-  const upcoming = fixtures.filter((f) => f.status !== "finished");
-  if (upcoming.length === 0) return [];
-  const nextRound = upcoming[0].round;
-  return upcoming.filter((f) => f.round === nextRound);
+  const genuinelyPending = fixtures
+    .filter((f) => f.status === "scheduled" || f.status === "live")
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  if (genuinelyPending.length === 0) return [];
+  const nextRound = genuinelyPending[0].round;
+  return fixtures.filter((f) => f.round === nextRound && f.status !== "finished");
 }
 
 /**

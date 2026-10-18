@@ -44,10 +44,19 @@ type FootballDataTeamsResponse = {
   teams?: FootballDataTeamItem[];
 };
 
+/**
+ * football-data.org's full status vocabulary (SCHEDULED, TIMED, IN_PLAY, PAUSED, FINISHED,
+ * SUSPENDED, POSTPONED, CANCELLED, AWARDED). Anything that means "this match's original date
+ * no longer holds and there's no confirmed new one" maps to "postponed" — critically, this
+ * must NOT fall through to "scheduled", or a stale postponed match (old date, never played)
+ * gets treated as a normal upcoming game and badly skews "current round"/"next match"
+ * calculations (see matchHelpers.ts).
+ */
 function mapMatchStatus(status?: string): MatchStatus {
   if (!status) return "scheduled";
-  if (status === "FINISHED") return "finished";
-  if (["IN_PLAY", "PAUSED", "LIVE"].includes(status)) return "live";
+  if (status === "FINISHED" || status === "AWARDED") return "finished";
+  if (status === "IN_PLAY" || status === "PAUSED" || status === "LIVE") return "live";
+  if (status === "POSTPONED" || status === "SUSPENDED" || status === "CANCELLED") return "postponed";
   return "scheduled";
 }
 

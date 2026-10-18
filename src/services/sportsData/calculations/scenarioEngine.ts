@@ -1,9 +1,8 @@
 import type { Competition, Fixture, ScenarioName, ScenarioResult, TeamStanding, TeamStatus } from "../types";
+import { getRemainingMatches } from "./matchHelpers";
 
 function getRemainingFixtures(team: TeamStanding, fixtures: Fixture[]): Fixture[] {
-  return fixtures
-    .filter((f) => f.status !== "finished" && (f.homeTeamId === team.teamId || f.awayTeamId === team.teamId))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return getRemainingMatches(team, fixtures).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 type Outcome = "win" | "draw" | "loss";

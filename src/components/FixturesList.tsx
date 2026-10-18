@@ -1,4 +1,5 @@
 import type { Fixture } from "@/services/sportsData/types";
+import { getMatchDisplayStatus } from "@/services/sportsData/calculations/matchHelpers";
 import { TeamLogo } from "@/components/TeamLogo";
 
 function groupByRound(fixtures: Fixture[]): [string, Fixture[]][] {
@@ -11,9 +12,9 @@ function groupByRound(fixtures: Fixture[]): [string, Fixture[]][] {
 }
 
 function FixtureRow({ fixture }: { fixture: Fixture }) {
-  const isFinished = fixture.status === "finished";
-  const date = new Date(fixture.date);
-  const formattedDate = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(date);
+  const display = getMatchDisplayStatus(fixture);
+  const formattedDate =
+    display.kind === "scheduled" ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(display.date) : null;
 
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5 text-sm last:border-0">
@@ -21,13 +22,17 @@ function FixtureRow({ fixture }: { fixture: Fixture }) {
         {fixture.homeTeamName}
         <TeamLogo team={fixture.homeTeamName} size="sm" />
       </span>
-      {isFinished ? (
+      {display.kind === "finished" ? (
         <span className="shrink-0 rounded-md bg-surface px-2 py-0.5 text-xs font-bold text-white">
-          {fixture.homeGoals} - {fixture.awayGoals}
+          {display.homeGoals} - {display.awayGoals}
+        </span>
+      ) : display.kind === "postponed" ? (
+        <span className="shrink-0 whitespace-nowrap rounded-md border border-warning/30 px-2 py-0.5 text-xs text-warning">
+          Adiada
         </span>
       ) : (
         <span className="shrink-0 rounded-md border border-border px-2 py-0.5 text-xs text-muted">
-          {fixture.status === "live" ? "AO VIVO" : formattedDate}
+          {display.kind === "live" ? "AO VIVO" : formattedDate}
         </span>
       )}
       <span className="flex flex-1 items-center gap-2 truncate text-white">

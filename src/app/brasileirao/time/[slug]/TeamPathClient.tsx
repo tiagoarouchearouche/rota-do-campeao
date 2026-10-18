@@ -9,6 +9,7 @@ import type { TeamPathResult } from "@/services/sportsData/teamPath";
 import { getScenarioPreference, setLastTeamId, setScenarioPreference } from "@/lib/userPreferences";
 import { buildTeamShareUrl } from "@/lib/shareState";
 import { resolveTeamObjective, type TeamObjective } from "@/services/sportsData/calculations/teamObjective";
+import { getTeamUpcomingMatches, getTeamPostponedMatches } from "@/services/sportsData/calculations/matchHelpers";
 import { getTeamUrl } from "@/lib/teamSlug";
 import { BRASILEIRAO_COMPETITION_ID } from "@/services/sportsData/competitions/competitionRegistry";
 import { TeamLogo } from "@/components/TeamLogo";
@@ -138,7 +139,8 @@ export function TeamPathClient({
   const objective = resolveTeamObjective(team, standings, competition);
   const headline = resolveHeadline(objective);
   const headlineIconKey = resolveHeadlineIconKey(objective);
-  const upcoming = fixtures.filter((f) => f.status !== "finished").slice(0, 5);
+  const upcoming = getTeamUpcomingMatches(fixtures, team.teamId, 5);
+  const postponed = getTeamPostponedMatches(fixtures, team.teamId);
   const opponents = Array.from(
     new Map(
       upcoming.map((f) => {
@@ -228,7 +230,17 @@ export function TeamPathClient({
 
         <section className="flex flex-col gap-2">
           <h2 className="font-display text-lg font-bold uppercase text-white">Próximos jogos</h2>
-          <FixturesList fixtures={upcoming} />
+          {upcoming.length > 0 ? (
+            <FixturesList fixtures={upcoming} />
+          ) : (
+            <p className="text-sm text-muted">Nenhum jogo confirmado no momento.</p>
+          )}
+          {postponed.length > 0 && (
+            <p className="text-xs text-warning">
+              {postponed.length} jogo{postponed.length > 1 ? "s" : ""} adiado{postponed.length > 1 ? "s" : ""}, nova data a
+              definir.
+            </p>
+          )}
           {opponents.length > 0 && (
             <p className="text-xs text-muted-2">
               Próximos adversários:{" "}

@@ -21,8 +21,12 @@ function computeForm(teamId: string, fixtures: Fixture[]): string | undefined {
 }
 
 function computeNextMatch(teamId: string, fixtures: Fixture[]): string | undefined {
+  // Deliberately excludes "postponed" — a match whose original date already passed and has no
+  // confirmed new one is not "next", and showing it as such was the "jogo de julho aparecendo
+  // em outubro" bug. If the only pending fixture is postponed, there's simply no known next
+  // match to show (undefined), which is more honest than a stale date.
   const upcoming = fixtures
-    .filter((f) => f.status !== "finished" && (f.homeTeamId === teamId || f.awayTeamId === teamId))
+    .filter((f) => (f.status === "scheduled" || f.status === "live") && (f.homeTeamId === teamId || f.awayTeamId === teamId))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const next = upcoming[0];

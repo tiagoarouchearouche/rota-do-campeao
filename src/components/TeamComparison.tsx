@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Fixture, TeamStanding } from "@/services/sportsData/types";
-import { calculateMaximumPossiblePoints } from "@/services/sportsData/calculations/pathEngine";
+import { getMaximumPossiblePoints, getRemainingMatches } from "@/services/sportsData/calculations/matchHelpers";
 import { TeamLogo } from "@/components/TeamLogo";
 import { trackEvent } from "@/lib/analytics";
 
@@ -16,10 +16,6 @@ function ComparisonRow({ label, a, b }: { label: string; a: string | number; b: 
   );
 }
 
-function remainingGamesFor(team: TeamStanding, fixtures: Fixture[]): number {
-  return fixtures.filter((f) => f.status !== "finished" && (f.homeTeamId === team.teamId || f.awayTeamId === team.teamId)).length;
-}
-
 export function TeamComparison({ standings, fixtures }: { standings: TeamStanding[]; fixtures: Fixture[] }) {
   const [teamAId, setTeamAId] = useState<string>(standings[0]?.teamId ?? "");
   const [teamBId, setTeamBId] = useState<string>(standings[1]?.teamId ?? "");
@@ -27,8 +23,8 @@ export function TeamComparison({ standings, fixtures }: { standings: TeamStandin
   const teamA = standings.find((t) => t.teamId === teamAId) ?? null;
   const teamB = standings.find((t) => t.teamId === teamBId) ?? null;
 
-  const remainingA = useMemo(() => (teamA ? remainingGamesFor(teamA, fixtures) : 0), [teamA, fixtures]);
-  const remainingB = useMemo(() => (teamB ? remainingGamesFor(teamB, fixtures) : 0), [teamB, fixtures]);
+  const remainingA = useMemo(() => (teamA ? getRemainingMatches(teamA, fixtures).length : 0), [teamA, fixtures]);
+  const remainingB = useMemo(() => (teamB ? getRemainingMatches(teamB, fixtures).length : 0), [teamB, fixtures]);
 
   return (
     <section className="flex flex-col gap-4">
@@ -92,8 +88,8 @@ export function TeamComparison({ standings, fixtures }: { standings: TeamStandin
           <ComparisonRow label="Jogos restantes" a={remainingA} b={remainingB} />
           <ComparisonRow
             label="Pontos disponíveis"
-            a={calculateMaximumPossiblePoints(teamA, fixtures) - teamA.points}
-            b={calculateMaximumPossiblePoints(teamB, fixtures) - teamB.points}
+            a={getMaximumPossiblePoints(teamA, fixtures) - teamA.points}
+            b={getMaximumPossiblePoints(teamB, fixtures) - teamB.points}
           />
         </div>
       )}

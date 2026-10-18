@@ -1,19 +1,18 @@
 import { Flame, TriangleAlert, Globe2 } from "lucide-react";
 import type { Fixture } from "@/services/sportsData/types";
+import { getMatchDisplayStatus } from "@/services/sportsData/calculations/matchHelpers";
 import { TeamLogo } from "@/components/TeamLogo";
 
 export type MatchBadge = { icon: typeof Flame; label: string; tone: string } | null;
 
-function formatDateTime(date: string): string {
-  const parsed = new Date(date);
-  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(parsed).toUpperCase().replace(".", "");
-  const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(parsed);
+function formatDateTime(date: Date): string {
+  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).toUpperCase().replace(".", "");
+  const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(date);
   return `${weekday} • ${time}`;
 }
 
 export function MatchCard({ fixture, badge }: { fixture: Fixture; badge?: MatchBadge }) {
-  const isFinished = fixture.status === "finished";
-  const isLive = fixture.status === "live";
+  const display = getMatchDisplayStatus(fixture);
 
   return (
     <div className="flex flex-col gap-3 rounded-md border border-border bg-graphite p-4">
@@ -25,14 +24,16 @@ export function MatchCard({ fixture, badge }: { fixture: Fixture; badge?: MatchB
       )}
 
       <p className="text-xs text-muted-2">
-        {isLive ? (
+        {display.kind === "live" ? (
           <span className="inline-flex items-center gap-1.5 text-danger">
             <span className="h-1.5 w-1.5 rounded-full bg-danger" aria-hidden="true" />
             AO VIVO
           </span>
-        ) : (
-          formatDateTime(fixture.date)
-        )}
+        ) : display.kind === "postponed" ? (
+          <span className="text-warning">Adiada — nova data a definir</span>
+        ) : display.kind === "scheduled" ? (
+          formatDateTime(display.date)
+        ) : null}
       </p>
 
       <div className="flex items-center justify-between gap-2">
@@ -42,7 +43,7 @@ export function MatchCard({ fixture, badge }: { fixture: Fixture; badge?: MatchB
         </div>
 
         <div className="shrink-0 px-2 text-center">
-          {isFinished || isLive ? (
+          {display.kind === "finished" || display.kind === "live" ? (
             <span className="font-display text-lg font-bold text-white">
               {fixture.homeGoals ?? 0} - {fixture.awayGoals ?? 0}
             </span>

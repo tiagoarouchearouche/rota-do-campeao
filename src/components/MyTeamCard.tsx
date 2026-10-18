@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Trophy, ShieldAlert, TriangleAlert, Globe2, ArrowRight } from "lucide-react";
 import type { Competition, Fixture, TeamStanding } from "@/services/sportsData/types";
 import {
-  calculateMaximumPossiblePoints,
   calculatePointsNeededForTitle,
   calculatePointsNeededForQualification,
   calculatePointsNeededToAvoidRelegation,
 } from "@/services/sportsData/calculations/pathEngine";
+import { getMaximumPossiblePoints, getRemainingMatches } from "@/services/sportsData/calculations/matchHelpers";
 import { resolveTeamObjective, type TeamObjective } from "@/services/sportsData/calculations/teamObjective";
 import { getTeamUrl } from "@/lib/teamSlug";
 import { TeamLogo } from "@/components/TeamLogo";
@@ -36,10 +36,8 @@ export function MyTeamCard({
   const config = MOOD_CONFIG[mood];
   const Icon = config.icon;
 
-  const remainingGames = fixtures.filter(
-    (f) => f.status !== "finished" && (f.homeTeamId === team.teamId || f.awayTeamId === team.teamId)
-  ).length;
-  const maxPoints = calculateMaximumPossiblePoints(team, fixtures);
+  const remainingGames = getRemainingMatches(team, fixtures).length;
+  const maxPoints = getMaximumPossiblePoints(team, fixtures);
 
   let detailLine: string;
   if (mood === "relegation" || mood === "risk") {

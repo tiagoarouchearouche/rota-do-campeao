@@ -44,7 +44,7 @@ export default async function ClassificacaoPage() {
 
         <StandingsTable standings={standings} competition={competition} />
 
-        <BrasileiraoAnalysis standings={standings} competition={competition} />
+        <BrasileiraoAnalysis standings={standings} fixtures={fixturesEnvelope.data} competition={competition} />
       </div>
     </main>
   );
