@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { siteConfig } from "@/lib/siteConfig";
+import { VisitorCounter } from "@/components/VisitorCounter";
 
 const LINKS = [
   { label: "Classificação", href: "/brasileirao/classificacao" },
@@ -29,10 +30,13 @@ export function Footer() {
             ))}
           </nav>
         </div>
-        <p className="text-xs text-muted-2">
-          {siteConfig.siteName} é um projeto independente e não possui vínculo oficial com a CBF ou os clubes
-          apresentados.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-2">
+            {siteConfig.siteName} é um projeto independente e não possui vínculo oficial com a CBF ou os clubes
+            apresentados.
+          </p>
+          <VisitorCounter />
+        </div>
       </div>
     </footer>
   );
