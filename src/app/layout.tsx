@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Oswald, Inter } from "next/font/google";
-import Script from "next/script";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
@@ -51,11 +50,16 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${oswald.variable} ${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-ink font-sans text-white">
         {siteConfig.adsenseClientId && (
-          <Script
+          // Deliberately a plain <script> tag, not next/script: next/script NEVER renders a
+          // literal <script src> in the server HTML (every strategy, including
+          // beforeInteractive, only emits a <link rel="preload"> and inserts the real tag via
+          // client JS). AdSense's site-verification crawler reads raw HTML without executing
+          // JS, so it needs the tag to actually be there — confirmed by testing a real
+          // production build (`next start`) and finding only the preload link.
+          <script
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${siteConfig.adsenseClientId}`}
             crossOrigin="anonymous"
-            strategy="afterInteractive"
           />
         )}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
